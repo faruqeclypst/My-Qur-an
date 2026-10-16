@@ -245,4 +245,91 @@ class AppStore extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  /// Pulihkan seluruh state dari JSON tree sinkronisasi (format SyncModel).
+  /// Dipakai saat login Google + Realtime Database aktif dan data remote
+  /// menang (last-write-wins). Semua nilai dibaca defensif: tree yang
+  /// tidak lengkap tetap bisa dipulihkan sebagian tanpa crash.
+  Future<void> restoreFromSync(Map<String, dynamic> tree) async {
+    Map<String, dynamic> bagian(String key) {
+      final v = tree[key];
+      return v is Map<String, dynamic> ? v : {};
+    }
+
+    T ambil<T>(Map<String, dynamic> m, String key, T fallback) {
+      final v = m[key];
+      return v is T ? v : fallback;
+    }
+
+    final profil = bagian('profile');
+    final modeKey = ambil<String>(profil, 'mode', 'normal');
+    mode = AppMode.values.firstWhere(
+      (m) => m.key == modeKey,
+      orElse: () => AppMode.normal,
+    );
+    nama = ambil<String>(profil, 'nama', '');
+    final fs = profil['fontScale'];
+    fontScale = (fs is num ? fs.toDouble() : 1.0).clamp(0.8, 2.2);
+
+    final tampilan = bagian('tampilan');
+    showTajwid = ambil<bool>(tampilan, 'tajwid', true);
+    showLatin = ambil<bool>(tampilan, 'latin', true);
+    showTerjemahan = ambil<bool>(tampilan, 'terjemahan', true);
+
+    final lr = tree['terakhirDibaca'];
+    lastRead = lr is Map<String, dynamic> ? LastRead.fromJson(lr) : null;
+
+    final rem = bagian('reminder');
+    reminderOn = ambil<bool>(rem, 'on', false);
+    reminderHour = (rem['hour'] is num ? (rem['hour'] as num).toInt() : 5)
+        .clamp(0, 23);
+    reminderMinute = (rem['minute'] is num ? (rem['minute'] as num).toInt() : 0)
+        .clamp(0, 59);
+
+    final ch = bagian('challenge');
+    challengeStreak = ch['streak'] is num ? (ch['streak'] as num).toInt() : 0;
+    challengeLastDate = ambil<String>(ch, 'lastDate', '');
+    challengeScore = ch['score'] is num ? (ch['score'] as num).toInt() : 0;
+    final b = ch['badges'];
+    badges = b is List ? [for (final x in b) '$x'] : [];
+
+    final iq = bagian('iqro');
+    iqroProgress = {
+      for (var j = 1; j <= 3; j++)
+        'j$j': iq['$j'] is num ? (iq['$j'] as num).toInt() : 0,
+    };
+
+    final ks = bagian('kisah');
+    kisahProgress = {
+      for (final e in ks.entries)
+        if (e.value is num) 'n${e.key}': (e.value as num).toInt(),
+    };
+
+    final hj = tree['hijaiyah'];
+    hijaiyahDipelajari = hj is List ? [for (final x in hj) '$x'] : [];
+
+    // Persist ke penyimpanan lokal
+    await Storage.setString('qb_mode', mode.key);
+    await Storage.setString('qb_name', nama);
+    await Storage.setDouble('qb_font_scale', fontScale);
+    await Storage.setBool('qb_show_tajwid', showTajwid);
+    await Storage.setBool('qb_show_latin', showLatin);
+    await Storage.setBool('qb_show_terjemahan', showTerjemahan);
+    if (lastRead != null) {
+      await Storage.setJson('qb_last_read', lastRead!.toJson());
+    } else {
+      await Storage.remove('qb_last_read');
+    }
+    await Storage.setBool('qb_reminder_on', reminderOn);
+    await Storage.setInt('qb_reminder_hour', reminderHour);
+    await Storage.setInt('qb_reminder_minute', reminderMinute);
+    await Storage.setInt('qb_challenge_streak', challengeStreak);
+    await Storage.setString('qb_challenge_last_date', challengeLastDate);
+    await Storage.setInt('qb_challenge_score', challengeScore);
+    await Storage.setStringList('qb_badges', badges);
+    await Storage.setJson('qb_iqro_progress', iqroProgress);
+    await Storage.setJson('qb_kisah_progress', kisahProgress);
+    await Storage.setStringList('qb_hijaiyah', hijaiyahDipelajari);
+    notifyListeners();
+  }
 }

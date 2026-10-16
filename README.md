@@ -26,6 +26,49 @@ Package: `id.examku.quranku`
 - **Pengaturan**: ganti mode, ukuran font, toggle tajwid/latin/terjemahan,
   info sinkronisasi cloud (segera hadir, via Firebase + login Google).
 
+## Sinkronisasi Cloud (rencana, belum aktif)
+
+Keputusan: **Firebase Authentication (Google Sign-In) + Realtime Database**.
+Tanpa Firestore. Login tetap opsional; tanpa login aplikasi lokal penuh.
+
+Struktur JSON tree di Realtime Database (`users/{uid}`):
+
+```
+users/{uid}/
+  meta:           { updatedAt, appVersion, schema }
+  profile:        { mode, nama, fontScale }
+  tampilan:       { tajwid, latin, terjemahan }
+  terakhirDibaca: { surah, namaSurah, ayat, waktu }
+  reminder:       { on, hour, minute }
+  challenge:      { streak, lastDate, score, badges: [...] }
+  iqro:           { "1": halaman, "2": halaman, "3": halaman }
+  kisah:          { "0": episodeIdx, ... }
+  hijaiyah:       [ "بَ", "تَ", ... ]
+```
+
+Lapisan data sudah siap: `lib/core/sync_model.dart` (`export()` /
+`rtdbPath(uid)` / `remoteLebihBaru()` untuk last-write-wins) dan
+`AppStore.restoreFromSync()` (pulihkan defensif dari tree, tanpa crash
+bila tree tidak lengkap). Test: `test/sync_model_test.dart` (`flutter test`).
+
+Langkah setup (~30 menit setelah proyek Firebase siap):
+1. Firebase Console → buat proyek (gratis) → daftarkan aplikasi Android
+   (`id.examku.quranku`) + Web.
+2. Authentication → aktifkan provider **Google**.
+3. Realtime Database → buat database → atur rules per-user:
+   ```json
+   { "rules": { "users": { "$uid": {
+     ".read": "auth != null && auth.uid == $uid",
+     ".write": "auth != null && auth.uid == $uid"
+   } } } }
+   ```
+4. Tambah paket `firebase_auth`, `google_sign_in`, `firebase_database`;
+   pasang `google-services.json` (Android) sesuai dokumentasi Firebase.
+5. Alur: setelah login Google → baca `users/{uid}` → bandingkan
+   `meta.updatedAt` dengan lokal (`SyncModel.remoteLebihBaru`) → yang baru
+   menang → tulis balik bila lokal lebih baru. Tombol "Sinkronkan sekarang"
+   + sinkronisasi otomatis tiap perubahan penting.
+
 ## Menjalankan
 
 ```bash
