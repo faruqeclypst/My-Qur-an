@@ -1,5 +1,7 @@
 // Halaman baca per surah: teks Arab + latin + terjemahan,
 // audio per ayat & full surah, slider font, toggle tajwid, auto-simpan terakhir dibaca.
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:provider/provider.dart';
@@ -28,6 +30,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
   final _scrollCtrl = ScrollController();
   final _kunciAyat = <int, GlobalKey>{};
   double _fontAyat = 30;
+  StreamSubscription<int?>? _indexSub;
 
   @override
   void initState() {
@@ -38,7 +41,24 @@ class _ReaderScreenState extends State<ReaderScreen> {
       if (!mounted) return;
       setState(() => _memutar = st.playing);
       if (st.processingState == ProcessingState.completed) {
-        _lanjutOtomatis();
+        setState(() {
+          _putarSemua = false;
+          _ayatDiputar = null;
+        });
+      }
+    });
+    // Ikuti perpindahan ayat saat memutar seluruh surah
+    _indexSub = _player.currentIndexStream.listen((idx) {
+      if (!mounted || !_putarSemua || _detail == null || idx == null) return;
+      final denganAudio = [
+        for (final a in _detail!.ayat)
+          if (a.audioUrl.isNotEmpty) a
+      ];
+      if (idx < denganAudio.length) {
+        final ayat = denganAudio[idx];
+        setState(() => _ayatDiputar = ayat.nomor);
+        _keAyat(ayat.nomor);
+        _simpanTerakhir(ayat.nomor);
       }
     });
   }
@@ -99,26 +119,27 @@ class _ReaderScreenState extends State<ReaderScreen> {
     }
   }
 
-  Future<void> _putarSemua() async {
-    final playlist = ConcatenatingAudioSource(
-      children: [
-        for (final a in _detail!.ayat)
-          if (a.audioUrl.isNotEmpty) AudioSource.uri(Uri.parse(a.audioUrl)),
-      ],
-    );
-    if (playlist.children.isEmpty) {
+  Future<void> _putarSeluruhSurah() async {
+    final sources = [
+      for (final a in _detail!.ayat)
+        if (a.audioUrl.isNotEmpty) AudioSource.uri(Uri.parse(a.audioUrl)),
+    ];
+    if (sources.isEmpty) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Audio surah ini tidak tersedia.')),
       );
       return;
     }
     try {
+      final pertama = _detail!.ayat.firstWhere((a) => a.audioUrl.isNotEmpty);
       setState(() {
         _putarSemua = true;
-        _ayatDiputar = null;
+        _ayatDiputar = pertama.nomor;
       });
-      await _player.setAudioSource(playlist);
+      await _player.setAudioSources(sources);
       await _player.play();
+      _keAyat(pertama.nomor);
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -137,23 +158,6 @@ class _ReaderScreenState extends State<ReaderScreen> {
     }
   }
 
-  void _lanjutOtomatis() {
-    if (!_putarSemua || _detail == null) {
-      setState(() {
-        _ayatDiputar = null;
-        _putarSemua = false;
-      });
-      return;
-    }
-    final idx = _player.currentIndex ?? 0;
-    if (idx < _detail!.ayat.length) {
-      final ayat = _detail!.ayat[idx];
-      setState(() => _ayatDiputar = ayat.nomor);
-      _keAyat(ayat.nomor);
-      _simpanTerakhir(ayat.nomor);
-    }
-  }
-
   void _simpanTerakhir(int ayat) {
     context.read<AppStore>().saveLastRead(
           widget.surah.nomor,
@@ -164,6 +168,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
   @override
   void dispose() {
+    _indexSub?.cancel();
     _player.dispose();
     _scrollCtrl.dispose();
     super.dispose();
@@ -196,7 +201,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                 : Icons.play_circle_outline),
             onPressed: _detail == null
                 ? null
-                : (_putarSemua && _memutar ? _berhenti : _putarSemua),
+                : (_putarSemua && _memutar ? _berhenti : _putarSeluruhSurah),
           ),
           // Ukuran font
           IconButton(

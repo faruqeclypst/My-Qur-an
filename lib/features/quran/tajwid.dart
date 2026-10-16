@@ -23,7 +23,6 @@ const _hurufIdghamBila = {'\u0644', '\u0631'}; // ل ر
 const _hurufQalqalah = {
   '\u0642', '\u0637', '\u0628', '\u062c', '\u062f'
 }; // ق ط ب ج د
-const _hurufMad = {'\u0627', '\u0648', '\u064a'}; // ا و ي
 
 // Palet tajwid: dibatasi 5 warna agar tidak ramai (R-29)
 class TajwidColors {

@@ -19,24 +19,26 @@ class SettingsScreen extends StatelessWidget {
         children: [
           _JudulSeksi('Mode Tampilan'),
           Card(
-            child: Column(
-              children: [
-                for (final m in AppMode.values)
-                  RadioListTile<AppMode>(
-                    title: Text('Mode ${m.label}'),
-                    subtitle: Text(_deskripsiMode(m)),
-                    value: m,
-                    groupValue: store.mode,
-                    onChanged: (v) {
-                      if (v != null) {
-                        context.read<AppStore>().setMode(v);
-                        if (v == AppMode.lansia) {
-                          context.read<AppStore>().setFontScale(1.35);
-                        }
-                      }
-                    },
-                  ),
-              ],
+            child: RadioGroup<AppMode>(
+              groupValue: store.mode,
+              onChanged: (v) {
+                if (v != null) {
+                  context.read<AppStore>().setMode(v);
+                  if (v == AppMode.lansia) {
+                    context.read<AppStore>().setFontScale(1.35);
+                  }
+                }
+              },
+              child: Column(
+                children: [
+                  for (final m in AppMode.values)
+                    RadioListTile<AppMode>(
+                      title: Text('Mode ${m.label}'),
+                      subtitle: Text(_deskripsiMode(m)),
+                      value: m,
+                    ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 16),
@@ -166,9 +168,9 @@ class SettingsScreen extends StatelessWidget {
             'cloud dengan login Google. Rencana teknisnya:\n\n'
             '1. Daftarkan proyek di Firebase Console (gratis).\n'
             '2. Aktifkan Authentication dengan metode Google Sign-In.\n'
-            '3. Aktifkan Cloud Firestore untuk menyimpan progres per pengguna.\n'
+            '3. Aktifkan Realtime Database untuk menyimpan progres per pengguna.\n'
             '4. Tambahkan paket firebase_auth, google_sign_in, dan '
-            'cloud_firestore ke aplikasi.\n\n'
+            'firebase_database ke aplikasi.\n\n'
             'Perkiraan waktu pengerjaan sekitar 30 menit setelah proyek '
             'Firebase siap. Login tetap opsional: tanpa login aplikasi '
             'tetap berfungsi penuh secara lokal.',

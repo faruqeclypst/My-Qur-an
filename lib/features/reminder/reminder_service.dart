@@ -5,7 +5,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
-import '../core/app_store.dart';
+import '../../core/app_store.dart';
 
 class ReminderService {
   static final _plugin = FlutterLocalNotificationsPlugin();

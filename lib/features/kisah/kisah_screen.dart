@@ -7,7 +7,6 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/app_store.dart';
-import '../../core/theme.dart';
 
 class KisahNabi {
   final String nama;

@@ -60,7 +60,9 @@ class _KiblatScreenState extends State<KiblatScreen> {
         return;
       }
       final pos = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.medium,
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.medium,
+        ),
       );
       if (!mounted) return;
       setState(() {

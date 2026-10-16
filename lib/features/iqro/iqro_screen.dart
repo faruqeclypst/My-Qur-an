@@ -107,20 +107,8 @@ class IqroScreen extends StatelessWidget {
                     children: [
                       Text(j.judul),
                       const SizedBox(height: 6),
-                      if (selesai)
-                        const Row(
-                          children: [
-                            Icon(Icons.check_circle,
-                                size: 16, color: QBColors.zamrud),
-                            SizedBox(width: 4),
-                            Text('Selesai'),
-                          ],
-                        )
-                      else if (progres > 0)
-                        Text('Lanjut halaman ${progres + 1} '
-                            'dari ${j.halaman.length}'),
-                      else
-                        Text('${j.halaman.length} halaman'),
+                      _StatusProgres(
+                          selesai: selesai, progres: progres, jilid: j),
                     ],
                   ),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 18),
@@ -139,8 +127,37 @@ class IqroScreen extends StatelessWidget {
   }
 }
 
-class _ErrorState extends StatelessWidget {
-  final VoidCallback onRetry;
+// Status progres tiap jilid (dipisah agar tidak memakai if/else di dalam list)
+class _StatusProgres extends StatelessWidget {
+  final bool selesai;
+  final int progres;
+  final IqroJilid jilid;
+  const _StatusProgres({
+    required this.selesai,
+    required this.progres,
+    required this.jilid,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (selesai) {
+      return const Row(
+        children: [
+          Icon(Icons.check_circle, size: 16, color: QBColors.zamrud),
+          SizedBox(width: 4),
+          Text('Selesai'),
+        ],
+      );
+    }
+    if (progres > 0) {
+      return Text(
+          'Lanjut halaman ${progres + 1} dari ${jilid.halaman.length}');
+    }
+    return Text('${jilid.halaman.length} halaman');
+  }
+}
+
+class _ErrorState extends StatelessWidget {  final VoidCallback onRetry;
   const _ErrorState({required this.onRetry});
 
   @override

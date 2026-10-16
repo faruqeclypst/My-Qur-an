@@ -14,6 +14,8 @@ echo "==> Cek tunnel SSH..."
 }
 
 echo "==> Build web release..."
+# Default build web = JavaScript (kompatibel penuh dengan semua plugin incl. TTS).
+# Jangan tambah --wasm: flutter_tts web belum lolos wasm dry-run.
 flutter build web --release
 
 echo "==> Upload ke /var/www/quranku ..."
