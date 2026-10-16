@@ -130,7 +130,7 @@ class SettingsScreen extends StatelessWidget {
                     'tajwid, belajar hijaiyah dan Iqro, kisah 25 nabi, kompas '
                     'kiblat, pengingat ngaji, dan challenge harian.\n\n'
                     'Teks, terjemahan, dan tafsir ringkas memakai data dari '
-                    'equran.ninja. Audio bacaan dari qari yang datanya '
+                    'equran.id. Audio bacaan dari qari yang datanya '
                     'disediakan layanan tersebut.\n\n'
                     'Semua progres tersimpan di perangkat ini, tanpa akun.',
                   ),

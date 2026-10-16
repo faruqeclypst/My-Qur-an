@@ -13,17 +13,28 @@ echo "==> Cek tunnel SSH..."
   exit 1
 }
 
-echo "==> Build web release..."
+echo "==> Build web release (root, untuk quran.examku.my.id)..."
 # Default build web = JavaScript (kompatibel penuh dengan semua plugin incl. TTS).
 # Jangan tambah --wasm: flutter_tts web belum lolos wasm dry-run.
 flutter build web --release
 
-echo "==> Upload ke /var/www/quranku ..."
-tar czf - -C build/web . | ~/workspace/tools/vps-ssh \
-  'sudo mkdir -p /var/www/quranku && sudo tar xzf - -C /var/www/quranku && sudo chown -R www-data:www-data /var/www/quranku'
+echo "==> Build web release (base-href /quran/, untuk path fallback)..."
+flutter build web --release --base-href /quran/ --output build/web-quran
 
-echo "==> Konfigurasi Caddy (conf.d)..."
-~/workspace/tools/vps-ssh 'sudo tee /etc/caddy/conf.d/quranku.caddy > /dev/null <<EOF
+echo "==> Upload ke /var/www/quranku (root build) ..."
+tar czf - -C build/web . | ~/workspace/tools/vps-ssh \
+  'sudo tar xzf - -C /var/www/quranku'
+~/workspace/tools/vps-ssh \
+  'sudo chown -R caddy:caddy /var/www/quranku && sudo chmod -R u=rwX,go=rX /var/www/quranku'
+
+echo "==> Upload ke /var/www/quranku-path (base-href /quran/) ..."
+tar czf - -C build/web-quran . | ~/workspace/tools/vps-ssh \
+  'sudo tar xzf - -C /var/www/quranku-path'
+~/workspace/tools/vps-ssh \
+  'sudo chown -R caddy:caddy /var/www/quranku-path && sudo chmod -R u=rwX,go=rX /var/www/quranku-path'
+
+echo "==> Konfigurasi Caddy (conf.d, idempoten)..."
+~/workspace/tools/vps-ssh 'sudo tee /etc/caddy/conf.d/quranku.caddy' << 'CEOF' > /dev/null
 quran.examku.my.id {
     root * /var/www/quranku
     try_files {path} /index.html
@@ -33,10 +44,16 @@ quran.examku.my.id {
         output file /var/log/caddy/quranku_access.log
     }
 }
-EOF
-sudo caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile'
+CEOF
+~/workspace/tools/vps-ssh 'sudo touch /var/log/caddy/quranku_access.log && sudo chown caddy:caddy /var/log/caddy/quranku_access.log && sudo caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile 2>&1 | tail -1'
 
 echo "==> Reload Caddy..."
-~/workspace/tools/vps-ssh 'sudo systemctl reload caddy && sleep 2 && curl -s -o /dev/null -w "HTTP %{http_code}\n" https://quran.examku.my.id/'
+~/workspace/tools/vps-ssh 'sudo systemctl reload caddy && sleep 2 && sudo systemctl is-active caddy'
 
-echo "==> Selesai. Buka https://quran.examku.my.id/"
+echo "==> Verifikasi..."
+~/workspace/tools/vps-ssh 'curl -sk --resolve perseverance.my.id:443:127.0.0.1 -o /dev/null -w "https://perseverance.my.id/quran/ -> HTTP %{http_code}\n" https://perseverance.my.id/quran/'
+
+echo "==> Selesai."
+echo "    Langsung bisa dibuka : https://perseverance.my.id/quran/"
+echo "    Setelah DNS A record quran -> 43.134.175.87 aktif di Cloudflare:"
+echo "                         https://quran.examku.my.id/ (sertifikat otomatis via Caddy)"

@@ -1,4 +1,4 @@
-// Klien API equran.ninja v2 + cache lokal (hemat kuota).
+// Klien API equran.id v2 + cache lokal (hemat kuota).
 // Parsing dibuat defensif: beberapa bentuk respons tetap bisa dibaca.
 import 'dart:convert';
 
@@ -85,7 +85,9 @@ int _toInt(dynamic v) {
 }
 
 class QuranApi {
-  static const _base = 'https://equran.ninja/api/v2';
+  // equran.id = domain yang sama dengan equran.ninja (payload identik),
+  // dipilih karena resolusi DNS-nya stabil. Tanpa API key/auth.
+  static const _base = 'https://equran.id/api/v2';
 
   /// Daftar 114 surah. Coba cache dulu, lalu jaringan.
   static Future<List<Surah>> daftarSurah({bool paksaRefresh = false}) async {
