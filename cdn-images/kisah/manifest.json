@@ -1,0 +1,185 @@
+{
+  "nabi": [
+    {
+      "nama": "Adam",
+      "gambar": [
+        "nabi_01_adam_a.jpg",
+        "nabi_01_adam_b.jpg",
+        "nabi_01_adam_c.jpg"
+      ]
+    },
+    {
+      "nama": "Idris",
+      "gambar": [
+        "nabi_02_idris_a.jpg",
+        "nabi_02_idris_b.jpg"
+      ]
+    },
+    {
+      "nama": "Nuh",
+      "gambar": [
+        "nabi_03_nuh_a.jpg",
+        "nabi_03_nuh_b.jpg",
+        "nabi_03_nuh_c.jpg"
+      ]
+    },
+    {
+      "nama": "Hud",
+      "gambar": [
+        "nabi_04_hud_a.jpg",
+        "nabi_04_hud_b.jpg"
+      ]
+    },
+    {
+      "nama": "Shalih",
+      "gambar": [
+        "nabi_05_shalih_a.jpg",
+        "nabi_05_shalih_b.jpg"
+      ]
+    },
+    {
+      "nama": "Ibrahim",
+      "gambar": [
+        "nabi_06_ibrahim_a.jpg",
+        "nabi_06_ibrahim_b.jpg",
+        "nabi_06_ibrahim_c.jpg"
+      ]
+    },
+    {
+      "nama": "Luth",
+      "gambar": [
+        "nabi_07_luth_a.jpg",
+        "nabi_07_luth_b.jpg"
+      ]
+    },
+    {
+      "nama": "Ismail",
+      "gambar": [
+        "nabi_08_ismail_a.jpg",
+        "nabi_08_ismail_b.jpg"
+      ]
+    },
+    {
+      "nama": "Ishaq",
+      "gambar": [
+        "nabi_09_ishaq_a.jpg",
+        "nabi_09_ishaq_b.jpg"
+      ]
+    },
+    {
+      "nama": "Yaqub",
+      "gambar": [
+        "nabi_10_yaqub_a.jpg",
+        "nabi_10_yaqub_b.jpg"
+      ]
+    },
+    {
+      "nama": "Yusuf",
+      "gambar": [
+        "nabi_11_yusuf_a.jpg",
+        "nabi_11_yusuf_b.jpg"
+      ]
+    },
+    {
+      "nama": "Ayub",
+      "gambar": [
+        "nabi_12_ayub_a.jpg",
+        "nabi_12_ayub_b.jpg"
+      ]
+    },
+    {
+      "nama": "Syuaib",
+      "gambar": [
+        "nabi_13_syuaib_a.jpg",
+        "nabi_13_syuaib_b.jpg"
+      ]
+    },
+    {
+      "nama": "Musa",
+      "gambar": [
+        "nabi_14_musa_a.jpg",
+        "nabi_14_musa_b.jpg",
+        "nabi_14_musa_c.jpg"
+      ]
+    },
+    {
+      "nama": "Harun",
+      "gambar": [
+        "nabi_15_harun_a.jpg",
+        "nabi_15_harun_b.jpg"
+      ]
+    },
+    {
+      "nama": "Zulkifli",
+      "gambar": [
+        "nabi_16_zulkifli_a.jpg",
+        "nabi_16_zulkifli_b.jpg"
+      ]
+    },
+    {
+      "nama": "Dawud",
+      "gambar": [
+        "nabi_17_dawud_a.jpg",
+        "nabi_17_dawud_b.jpg"
+      ]
+    },
+    {
+      "nama": "Sulaiman",
+      "gambar": [
+        "nabi_18_sulaiman_a.jpg",
+        "nabi_18_sulaiman_b.jpg"
+      ]
+    },
+    {
+      "nama": "Ilyas",
+      "gambar": [
+        "nabi_19_ilyas_a.jpg",
+        "nabi_19_ilyas_b.jpg"
+      ]
+    },
+    {
+      "nama": "Ilyasa",
+      "gambar": [
+        "nabi_20_ilyasa_a.jpg",
+        "nabi_20_ilyasa_b.jpg"
+      ]
+    },
+    {
+      "nama": "Yunus",
+      "gambar": [
+        "nabi_21_yunus_a.jpg",
+        "nabi_21_yunus_b.jpg"
+      ]
+    },
+    {
+      "nama": "Zakaria",
+      "gambar": [
+        "nabi_22_zakaria_a.jpg",
+        "nabi_22_zakaria_b.jpg"
+      ]
+    },
+    {
+      "nama": "Yahya",
+      "gambar": [
+        "nabi_23_yahya_a.jpg",
+        "nabi_23_yahya_b.jpg"
+      ]
+    },
+    {
+      "nama": "Isa",
+      "gambar": [
+        "nabi_24_isa_a.jpg",
+        "nabi_24_isa_b.jpg",
+        "nabi_24_isa_c.jpg"
+      ]
+    },
+    {
+      "nama": "Muhammad",
+      "gambar": [
+        "nabi_25_muhammad_a.jpg",
+        "nabi_25_muhammad_b.jpg",
+        "nabi_25_muhammad_c.jpg"
+      ]
+    }
+  ]
+}

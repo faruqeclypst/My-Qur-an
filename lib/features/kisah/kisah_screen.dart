@@ -1,13 +1,17 @@
 // Kisah Nabi: serial 25 nabi, tiap nabi beberapa episode pendek.
-// Ilustrasi memakai emoji sesuai permintaan eksplisit user (override R-04 untuk fitur ini).
+// Ilustrasi: gambar simbolik (tanpa figur nabi) dari CDN
+// (jsDelivr <- folder cdn-images/kisah/ di repo GitHub), dimuat dengan
+// CachedNetworkImage; emoji dipakai hanya sebagai fallback saat offline/gagal.
 import 'dart:convert';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/app_store.dart';
 import '../../core/theme.dart';
+import 'kisah_gambar.dart';
 
 class KisahNabi {
   final String nama;
@@ -38,7 +42,8 @@ Future<List<KisahNabi>> muatKisah() async {
   ];
 }
 
-// Satu emoji per nabi sebagai "sampul" serial (tanpa gambar eksternal).
+// Satu emoji per nabi — dipakai sebagai fallback bila ilustrasi CDN
+// tidak bisa dimuat (offline / sebelum push GitHub selesai).
 const _emojiNabi = [
   '\u{1F468}', '\u2728', '\u{1F6A2}', '\u{1F32A}', '\u{1F42A}',
   '\u{1F525}', '\u{1F3D5}\uFE0F', '\u{1F411}', '\u2B50', '\u{1F31F}',
@@ -80,28 +85,13 @@ class KisahScreen extends StatelessWidget {
                   child: ListTile(
                     contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 8),
-                    leading: Container(
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Theme.of(context).colorScheme.primary,
-                            Theme.of(context)
-                                .colorScheme
-                                .primary
-                                .withValues(alpha: 0.65),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        _emojiNabi[i % _emojiNabi.length],
-                        style: const TextStyle(fontSize: 26),
-                      ),
+                    leading: _GambarKisah(
+                      namaNabi: nabi.nama,
+                      indexGambar: 0,
+                      width: 56,
+                      height: 56,
+                      emojiFallback:
+                          _emojiNabi[i % _emojiNabi.length],
                     ),
                     title: Text(
                       'Nabi ${nabi.nama}',
@@ -197,7 +187,18 @@ class _KisahDetailScreenState extends State<_KisahDetailScreen> {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          // Sampul episode
+          // Ilustrasi episode dari CDN (fallback gradien+emoji saat offline)
+          _GambarKisah(
+            namaNabi: nabi.nama,
+            indexGambar: _episode,
+            width: double.infinity,
+            height: 200,
+            radius: 20,
+            emojiFallback:
+                _emojiNabi[widget.index % _emojiNabi.length],
+          ),
+          const SizedBox(height: 16),
+          // Kepala episode
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
@@ -210,11 +211,6 @@ class _KisahDetailScreenState extends State<_KisahDetailScreen> {
             ),
             child: Column(
               children: [
-                Text(
-                  _emojiNabi[widget.index % _emojiNabi.length],
-                  style: const TextStyle(fontSize: 56),
-                ),
-                const SizedBox(height: 12),
                 Text(
                   ep.judul,
                   textAlign: TextAlign.center,
@@ -336,6 +332,77 @@ class _KisahDetailScreenState extends State<_KisahDetailScreen> {
           ),
           TextSpan(text: sisa),
         ],
+      ),
+    );
+  }
+}
+
+/// Ilustrasi kisah dari CDN (jsDelivr <- folder cdn-images/kisah/ di repo).
+/// Placeholder sederhana saat memuat; fallback gradien+emoji saat offline
+/// atau gambar belum tersedia (mis. sebelum push GitHub selesai) — tidak
+/// ada gambar rusak/layar kosong dalam kondisi apa pun.
+class _GambarKisah extends StatelessWidget {
+  final String namaNabi;
+  final int indexGambar;
+  final double? width;
+  final double? height;
+  final double radius;
+  final String emojiFallback;
+
+  const _GambarKisah({
+    required this.namaNabi,
+    required this.indexGambar,
+    this.width,
+    this.height,
+    this.radius = 14,
+    required this.emojiFallback,
+  });
+
+  Widget _fallback(BuildContext context) {
+    final primer = Theme.of(context).colorScheme.primary;
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [primer, primer.withValues(alpha: 0.65)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(radius),
+      ),
+      alignment: Alignment.center,
+      child: Text(emojiFallback, style: const TextStyle(fontSize: 26)),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final primer = Theme.of(context).colorScheme.primary;
+    final url = kisahGambarUrl(namaNabi, indexGambar);
+    if (url.isEmpty) return _fallback(context);
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(radius),
+      child: CachedNetworkImage(
+        imageUrl: url,
+        width: width,
+        height: height,
+        fit: BoxFit.cover,
+        placeholder: (ctx, _) => Container(
+          width: width,
+          height: height,
+          color: primer.withValues(alpha: 0.08),
+          alignment: Alignment.center,
+          child: SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(
+              strokeWidth: 2.5,
+              color: primer.withValues(alpha: 0.6),
+            ),
+          ),
+        ),
+        errorWidget: (ctx, _, __) => _fallback(context),
       ),
     );
   }
