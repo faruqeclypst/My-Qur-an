@@ -385,7 +385,9 @@ class _ReaderScreenState extends State<ReaderScreen> {
           BingkaiMushaf(
             warnaGaris: primer,
             child: RichText(
-              textAlign: TextAlign.justify,
+              // Rata kanan natural (bukan justify): spasi antar kata tetap
+              // wajar walau ukuran huruf dibesarkan — seperti mushaf cetak.
+              textAlign: TextAlign.right,
               textDirection: TextDirection.rtl,
               text: TextSpan(children: children, style: gayaMushaf),
             ),
