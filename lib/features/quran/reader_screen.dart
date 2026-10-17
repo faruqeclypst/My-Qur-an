@@ -349,10 +349,12 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
   /// Mode Mushaf: seluruh teks Arab satu surah mengalir utuh seperti mushaf
   /// cetak. Tanpa kartu per ayat, tanpa latin, tanpa terjemahan. Tiap akhir
-  /// ayat diberi penanda nomor dalam lingkaran. Pewarnaan tajwid, ukuran
-  /// font, dan audio full surah tetap didukung.
+  /// ayat diberi penanda nomor (angka Arab dalam kurung ornamen ﴿﴾) sebagai
+  /// TextSpan murni — tanpa WidgetSpan agar aliran teks RTL tidak rusak.
+  /// Pewarnaan tajwid, ukuran font, dan audio full surah tetap didukung.
   Widget _tampilanMushaf(AppStore store, Color primer, TextStyle gayaArab) {
     final gayaMushaf = gayaArab.copyWith(height: 2.35);
+    final gayaPenanda = gayaMushaf.copyWith(color: primer);
     final children = <InlineSpan>[];
     for (final ayat in _detail!.ayat) {
       final span = bangunTeksTajwid(
@@ -366,18 +368,12 @@ class _ReaderScreenState extends State<ReaderScreen> {
       } else {
         children.add(TextSpan(text: ayat.teksArab, style: gayaMushaf));
       }
-      children.add(const TextSpan(text: ' '));
       children.add(
-        WidgetSpan(
-          alignment: PlaceholderAlignment.middle,
-          child: _PenandaAyat(
-            angka: _angkaArab(ayat.nomor),
-            ukuranFont: _fontAyat,
-            primer: primer,
-          ),
+        TextSpan(
+          text: ' \uFD3F${_angkaArab(ayat.nomor)}\uFD3E ',
+          style: gayaPenanda,
         ),
       );
-      children.add(const TextSpan(text: '   '));
     }
 
     return SingleChildScrollView(
@@ -610,38 +606,6 @@ class _ReaderScreenState extends State<ReaderScreen> {
             child: const Text('Tutup'),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// Penanda akhir ayat di mode Mushaf: nomor ayat (angka Arab) dalam lingkaran.
-/// Dipakai sebagai WidgetSpan di tengah aliran teks RTL.
-class _PenandaAyat extends StatelessWidget {
-  final String angka;
-  final double ukuranFont;
-  final Color primer;
-
-  const _PenandaAyat({
-    required this.angka,
-    required this.ukuranFont,
-    required this.primer,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final s = (ukuranFont * 0.5).clamp(13.0, 24.0);
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 3),
-      padding: EdgeInsets.all(s * 0.3),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(color: primer, width: 1.4),
-        color: primer.withValues(alpha: 0.07),
-      ),
-      child: Text(
-        angka,
-        style: QBTheme.arab(size: s, color: primer, height: 1.1),
       ),
     );
   }
