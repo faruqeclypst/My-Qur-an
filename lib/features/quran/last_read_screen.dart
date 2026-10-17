@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../core/app_store.dart';
 import 'quran_api.dart';
 import 'reader_screen.dart';
+import 'surah_list_screen.dart';
 
 class LastReadScreen extends StatelessWidget {
   const LastReadScreen({super.key});
@@ -17,12 +18,36 @@ class LastReadScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Terakhir Dibaca')),
       body: lr == null
-          ? const Center(
+          ? Center(
               child: Padding(
-                padding: EdgeInsets.all(24),
-                child: Text(
-                  'Belum ada bacaan tersimpan.\nMulai ngaji dan posisimu akan tersimpan otomatis di sini.',
-                  textAlign: TextAlign.center,
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.bookmark_add_outlined,
+                      size: 56,
+                      color: Theme.of(context)
+                          .colorScheme
+                          .primary
+                          .withValues(alpha: 0.5),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Belum ada bacaan tersimpan.\nMulai ngaji dan posisimu akan tersimpan otomatis di sini.',
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    FilledButton.icon(
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const SurahListScreen(),
+                        ),
+                      ),
+                      icon: const Icon(Icons.menu_book_outlined),
+                      label: const Text('Mulai Ngaji'),
+                    ),
+                  ],
                 ),
               ),
             )

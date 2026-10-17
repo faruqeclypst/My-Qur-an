@@ -7,6 +7,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/app_store.dart';
+import '../../core/dekorasi.dart';
 import '../../core/theme.dart';
 import 'quran_api.dart';
 import 'tajwid.dart';
@@ -57,7 +58,11 @@ class _ReaderScreenState extends State<ReaderScreen> {
       if (idx < denganAudio.length) {
         final ayat = denganAudio[idx];
         setState(() => _ayatDiputar = ayat.nomor);
-        _keAyat(ayat.nomor);
+        // Auto-scroll hanya di mode per-ayat (di mode mushaf tidak ada
+        // GlobalKey per ayat karena teksnya mengalir utuh).
+        if (context.read<AppStore>().modeBaca == 'ayat') {
+          _keAyat(ayat.nomor);
+        }
         _simpanTerakhir(ayat.nomor);
       }
     });
@@ -210,6 +215,40 @@ class _ReaderScreenState extends State<ReaderScreen> {
             onPressed: () => _dialogFont(),
           ),
         ],
+        // Toggle Per Ayat / Mushaf: di AppBar agar mudah dijangkau ibu jari.
+        // Pilihan diingat di preferensi lokal (AppStore.modeBaca).
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(60),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: SegmentedButton<String>(
+              style: SegmentedButton.styleFrom(
+                selectedForegroundColor: Colors.white,
+                selectedBackgroundColor:
+                    Colors.white.withValues(alpha: 0.25),
+                foregroundColor: Colors.white.withValues(alpha: 0.8),
+                side: BorderSide(
+                  color: Colors.white.withValues(alpha: 0.4),
+                ),
+              ),
+              segments: const [
+                ButtonSegment(
+                  value: 'ayat',
+                  icon: Icon(Icons.view_agenda_outlined, size: 18),
+                  label: Text('Per Ayat'),
+                ),
+                ButtonSegment(
+                  value: 'mushaf',
+                  icon: Icon(Icons.menu_book_outlined, size: 18),
+                  label: Text('Mushaf'),
+                ),
+              ],
+              selected: {store.modeBaca},
+              onSelectionChanged: (v) =>
+                  context.read<AppStore>().setModeBaca(v.first),
+            ),
+          ),
+        ),
       ),
       body: _badan(store, primer),
       bottomNavigationBar: _detail == null
@@ -234,7 +273,9 @@ class _ReaderScreenState extends State<ReaderScreen> {
                             ? 'Memutar seluruh surah...'
                             : _ayatDiputar != null && _memutar
                                 ? 'Memutar ayat $_ayatDiputar...'
-                                : 'Ketuk ikon suara pada ayat untuk mendengar',
+                                : store.modeBaca == 'mushaf'
+                                    ? 'Ketuk ikon putar di atas untuk audio seluruh surah'
+                                    : 'Ketuk ikon suara pada ayat untuk mendengar',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: QBColors.tintaLembut,
                             ),
@@ -299,6 +340,92 @@ class _ReaderScreenState extends State<ReaderScreen> {
       height: 2.1,
     );
 
+    // Cabang tampilan: kartu per ayat, atau teks mengalir ala mushaf.
+    if (store.modeBaca == 'mushaf') {
+      return _tampilanMushaf(store, primer, gayaArab);
+    }
+    return _tampilanPerAyat(store, gayaArab, primer);
+  }
+
+  /// Mode Mushaf: seluruh teks Arab satu surah mengalir utuh seperti mushaf
+  /// cetak. Tanpa kartu per ayat, tanpa latin, tanpa terjemahan. Tiap akhir
+  /// ayat diberi penanda nomor dalam lingkaran. Pewarnaan tajwid, ukuran
+  /// font, dan audio full surah tetap didukung.
+  Widget _tampilanMushaf(AppStore store, Color primer, TextStyle gayaArab) {
+    final gayaMushaf = gayaArab.copyWith(height: 2.35);
+    final children = <InlineSpan>[];
+    for (final ayat in _detail!.ayat) {
+      final span = bangunTeksTajwid(
+        ayat.teksArab,
+        gayaDasar: gayaMushaf,
+        aktif: store.showTajwid,
+      );
+      final isi = span.children;
+      if (isi != null && isi.isNotEmpty) {
+        children.addAll(isi);
+      } else {
+        children.add(TextSpan(text: ayat.teksArab, style: gayaMushaf));
+      }
+      children.add(const TextSpan(text: ' '));
+      children.add(
+        WidgetSpan(
+          alignment: PlaceholderAlignment.middle,
+          child: _PenandaAyat(
+            angka: _angkaArab(ayat.nomor),
+            ukuranFont: _fontAyat,
+            primer: primer,
+          ),
+        ),
+      );
+      children.add(const TextSpan(text: '   '));
+    }
+
+    return SingleChildScrollView(
+      controller: _scrollCtrl,
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
+      child: Column(
+        children: [
+          _kepalaSurah(store, primer),
+          BingkaiMushaf(
+            warnaGaris: primer,
+            child: RichText(
+              textAlign: TextAlign.justify,
+              textDirection: TextDirection.rtl,
+              text: TextSpan(children: children, style: gayaMushaf),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            'Mode Mushaf: seluruh surah dalam satu bacaan mengalir',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: QBColors.tintaLembut,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Ubah angka Latin menjadi angka Arab-Indonesia (٠١٢٣٤٥٦٧٨٩)
+  /// untuk penanda akhir ayat.
+  String _angkaArab(int n) {
+    const digit = [
+      '\u0660',
+      '\u0661',
+      '\u0662',
+      '\u0663',
+      '\u0664',
+      '\u0665',
+      '\u0666',
+      '\u0667',
+      '\u0668',
+      '\u0669'
+    ];
+    return n.toString().split('').map((c) => digit[int.parse(c)]).join();
+  }
+
+  Widget _tampilanPerAyat(AppStore store, TextStyle gayaArab, Color primer) {
     return ListView.builder(
       controller: _scrollCtrl,
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
@@ -438,7 +565,12 @@ class _ReaderScreenState extends State<ReaderScreen> {
                   ),
               ],
             ),
-          const Divider(height: 24),
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: PembatasOrnamen(
+              warna: primer.withValues(alpha: 0.3),
+            ),
+          ),
         ],
       ),
     );
@@ -478,6 +610,38 @@ class _ReaderScreenState extends State<ReaderScreen> {
             child: const Text('Tutup'),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Penanda akhir ayat di mode Mushaf: nomor ayat (angka Arab) dalam lingkaran.
+/// Dipakai sebagai WidgetSpan di tengah aliran teks RTL.
+class _PenandaAyat extends StatelessWidget {
+  final String angka;
+  final double ukuranFont;
+  final Color primer;
+
+  const _PenandaAyat({
+    required this.angka,
+    required this.ukuranFont,
+    required this.primer,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final s = (ukuranFont * 0.5).clamp(13.0, 24.0);
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 3),
+      padding: EdgeInsets.all(s * 0.3),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: primer, width: 1.4),
+        color: primer.withValues(alpha: 0.07),
+      ),
+      child: Text(
+        angka,
+        style: QBTheme.arab(size: s, color: primer, height: 1.1),
       ),
     );
   }

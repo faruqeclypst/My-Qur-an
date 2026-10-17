@@ -73,6 +73,7 @@ class AppStore extends ChangeNotifier {
   bool showTajwid = true;
   bool showLatin = true;
   bool showTerjemahan = true;
+  String modeBaca = 'ayat'; // 'ayat' | 'mushaf' — pilihan tampilan halaman baca
 
   LastRead? lastRead;
 
@@ -101,6 +102,8 @@ class AppStore extends ChangeNotifier {
     showTajwid = Storage.getBool('qb_show_tajwid', true);
     showLatin = Storage.getBool('qb_show_latin', true);
     showTerjemahan = Storage.getBool('qb_show_terjemahan', true);
+    final mb = Storage.getString('qb_read_mode') ?? 'ayat';
+    modeBaca = mb == 'mushaf' ? 'mushaf' : 'ayat';
 
     final lr = Storage.getJson('qb_last_read');
     lastRead = lr.isEmpty ? null : LastRead.fromJson(lr);
@@ -163,6 +166,14 @@ class AppStore extends ChangeNotifier {
       showTerjemahan = terjemahan;
       await Storage.setBool('qb_show_terjemahan', terjemahan);
     }
+    notifyListeners();
+  }
+
+  /// Pilihan tampilan halaman baca: 'ayat' (kartu per ayat) atau 'mushaf'
+  /// (teks Arab mengalir penuh). Diingat per preferensi lokal.
+  Future<void> setModeBaca(String v) async {
+    modeBaca = v == 'mushaf' ? 'mushaf' : 'ayat';
+    await Storage.setString('qb_read_mode', modeBaca);
     notifyListeners();
   }
 
@@ -275,6 +286,8 @@ class AppStore extends ChangeNotifier {
     showTajwid = ambil<bool>(tampilan, 'tajwid', true);
     showLatin = ambil<bool>(tampilan, 'latin', true);
     showTerjemahan = ambil<bool>(tampilan, 'terjemahan', true);
+    final mb = ambil<String>(tampilan, 'modeBaca', 'ayat');
+    modeBaca = mb == 'mushaf' ? 'mushaf' : 'ayat';
 
     final lr = tree['terakhirDibaca'];
     lastRead = lr is Map<String, dynamic> ? LastRead.fromJson(lr) : null;
@@ -315,6 +328,7 @@ class AppStore extends ChangeNotifier {
     await Storage.setBool('qb_show_tajwid', showTajwid);
     await Storage.setBool('qb_show_latin', showLatin);
     await Storage.setBool('qb_show_terjemahan', showTerjemahan);
+    await Storage.setString('qb_read_mode', modeBaca);
     if (lastRead != null) {
       await Storage.setJson('qb_last_read', lastRead!.toJson());
     } else {

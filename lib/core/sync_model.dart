@@ -6,7 +6,7 @@
 //   users/{uid}/
 //     meta:          { updatedAt, appVersion, schema }
 //     profile:       { mode, nama, fontScale }
-//     tampilan:      { tajwid, latin, terjemahan }
+//     tampilan:      { tajwid, latin, terjemahan, modeBaca }
 //     terakhirDibaca:{ surah, namaSurah, ayat, waktu }   (opsional)
 //     reminder:      { on, hour, minute }
 //     challenge:     { streak, lastDate, score, badges: [...] }
@@ -47,6 +47,7 @@ class SyncModel {
         'tajwid': s.showTajwid,
         'latin': s.showLatin,
         'terjemahan': s.showTerjemahan,
+        'modeBaca': s.modeBaca,
       },
       'reminder': {
         'on': s.reminderOn,

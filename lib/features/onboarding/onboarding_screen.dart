@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/app_store.dart';
+import '../../core/dekorasi.dart';
 import '../../core/theme.dart';
 import '../home/home_screen.dart';
 
@@ -35,59 +36,97 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final primer = Theme.of(context).colorScheme.primary;
     return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 520),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const SizedBox(height: 16),
-                  // Motif mihrab sederhana sebagai identitas
-                  Center(
-                    child: Container(
-                      width: 96,
-                      height: 96,
-                      decoration: BoxDecoration(
-                        color: QBColors.zamrud,
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(48),
-                          topRight: Radius.circular(48),
-                          bottomLeft: Radius.circular(16),
-                          bottomRight: Radius.circular(16),
+      body: LatarPola(
+        // Latar berpola samar: identitas geometri Islami sejak layar pertama.
+        warnaDasar: QBColors.krem,
+        warnaPola: primer.withValues(alpha: 0.055),
+        jarak: 72,
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 520),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: 8),
+                    // Emblem mihrab dengan cincin emas: penanda identitas.
+                    Center(
+                      child: Container(
+                        padding: const EdgeInsets.all(5),
+                        decoration: BoxDecoration(
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(56),
+                            topRight: Radius.circular(56),
+                            bottomLeft: Radius.circular(22),
+                            bottomRight: Radius.circular(22),
+                          ),
+                          border: Border.all(
+                            color: QBColors.emas,
+                            width: 2,
+                          ),
                         ),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        '\u0627\u0644\u0642\u0631\u0622\u0646',
-                        style: QBTheme.arab(
-                          size: 30,
-                          color: Colors.white,
-                          height: 1.4,
+                        child: Container(
+                          width: 96,
+                          height: 96,
+                          decoration: BoxDecoration(
+                            color: primer,
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(48),
+                              topRight: Radius.circular(48),
+                              bottomLeft: Radius.circular(16),
+                              bottomRight: Radius.circular(16),
+                            ),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            '\u0627\u0644\u0642\u0631\u0622\u0646',
+                            style: QBTheme.arab(
+                              size: 30,
+                              color: Colors.white,
+                              height: 1.4,
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Quranku',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context)
-                        .textTheme
-                        .headlineMedium
-                        ?.copyWith(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Teman ngaji harian: baca Quran, belajar hijaiyah dan Iqro, kisah nabi, kompas kiblat, dan pengingat ngaji.',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: QBColors.tintaLembut,
-                        ),
-                  ),
+                    const SizedBox(height: 20),
+                    Text(
+                      'Quranku',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context)
+                          .textTheme
+                          .displaySmall
+                          ?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: QBColors.tinta,
+                            letterSpacing: 0.5,
+                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'ٱقْرَأْ بِٱسْمِ رَبِّكَ',
+                      textAlign: TextAlign.center,
+                      style: QBTheme.arab(
+                        size: 20,
+                        color: primer,
+                        height: 1.8,
+                      ),
+                      textDirection: TextDirection.rtl,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Teman ngaji harian: baca Quran, belajar hijaiyah dan Iqro, kisah nabi, kompas kiblat, dan pengingat ngaji.',
+                      textAlign: TextAlign.center,
+                      style:
+                          Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: QBColors.tintaLembut,
+                                height: 1.6,
+                              ),
+                    ),
                   const SizedBox(height: 32),
                   Text(
                     'Siapa yang memakai aplikasi ini?',
@@ -149,13 +188,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           color: QBColors.tintaLembut,
                         ),
                   ),
+                  const SizedBox(height: 8),
                 ],
               ),
             ),
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 }
 
@@ -185,9 +226,23 @@ class _ModeCard extends StatelessWidget {
     }
   }
 
+  /// Warna identitas tiap mode sebagai pratinjau sebelum dipilih
+  /// (R-31: membantu pengguna membedakan karakter tiap mode).
+  Color get _warna {
+    switch (mode) {
+      case AppMode.lansia:
+        return QBColors.zamrudTua;
+      case AppMode.normal:
+        return QBColors.zamrud;
+      case AppMode.anak:
+        return QBColors.toskaCeria;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final primer = Theme.of(context).colorScheme.primary;
+    final aksen = _warna;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
@@ -196,23 +251,34 @@ class _ModeCard extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: dipilih ? primer : primer.withValues(alpha: 0.25),
-            width: dipilih ? 2.5 : 1.5,
+            color: dipilih ? aksen : primer.withValues(alpha: 0.22),
+            width: dipilih ? 2.5 : 1.2,
           ),
-          color: dipilih ? primer.withValues(alpha: 0.08) : Colors.transparent,
+          color: dipilih
+              ? aksen.withValues(alpha: 0.1)
+              : Theme.of(context).colorScheme.surface,
+          boxShadow: dipilih
+              ? [
+                  BoxShadow(
+                    color: aksen.withValues(alpha: 0.18),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
         ),
         child: Row(
           children: [
             Container(
-              width: 52,
-              height: 52,
+              width: 54,
+              height: 54,
               decoration: BoxDecoration(
-                color: dipilih ? primer : primer.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(14),
+                color: dipilih ? aksen : aksen.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(15),
               ),
               child: Icon(
                 _icon,
-                color: dipilih ? Colors.white : primer,
+                color: dipilih ? Colors.white : aksen,
                 size: 28,
               ),
             ),
@@ -232,12 +298,25 @@ class _ModeCard extends StatelessWidget {
                     deskripsi,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: QBColors.tintaLembut,
+                          height: 1.5,
                         ),
                   ),
                 ],
               ),
             ),
-            if (dipilih) Icon(Icons.check_circle, color: primer),
+            if (dipilih)
+              Container(
+                padding: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  color: aksen,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.check,
+                  color: Colors.white,
+                  size: 18,
+                ),
+              ),
           ],
         ),
       ),

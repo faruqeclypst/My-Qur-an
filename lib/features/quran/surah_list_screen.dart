@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/app_store.dart';
+import '../../core/dekorasi.dart';
 import '../../core/theme.dart';
 import 'quran_api.dart';
 import 'reader_screen.dart';
@@ -147,66 +148,58 @@ class _SurahListScreenState extends State<SurahListScreen> {
     }
     return RefreshIndicator(
       onRefresh: () => _muat(refresh: true),
-      child: ListView.separated(
-        padding: const EdgeInsets.all(12),
-        itemCount: list.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 8),
+      child: ListView.builder(
+        padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+        itemCount: list.length + 1,
         itemBuilder: (context, i) {
-          final s = list[i];
-          return Card(
-            child: ListTile(
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              leading: _NomorSurah(nomor: s.nomor),
-              title: Text(
-                s.namaLatin,
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w600),
+          // Kepala daftar: konteks jumlah surah yang tampil
+          if (i == 0) {
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(4, 12, 4, 10),
+              child: Text(
+                _cari.trim().isEmpty
+                    ? '114 surah, dari Al-Fatihah hingga An-Nas'
+                    : '${list.length} surah ditemukan',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: QBColors.tintaLembut,
+                    ),
               ),
-              subtitle: Text(
-                  '${s.arti} \u2022 ${s.jumlahAyat} ayat \u2022 ${s.tempatTurun}'),
-              trailing: Text(
-                s.namaArab,
-                style: QBTheme.arab(size: 24, color: QBColors.zamrudTua),
-                textDirection: TextDirection.rtl,
-              ),
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => ReaderScreen(surah: s),
+            );
+          }
+          final s = list[i - 1];
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Card(
+              child: ListTile(
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                leading: MedaliNomor(nomor: s.nomor),
+                title: Text(
+                  s.namaLatin,
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w600),
+                ),
+                subtitle: Text(
+                    '${s.arti} \u2022 ${s.jumlahAyat} ayat \u2022 ${s.tempatTurun}'),
+                trailing: Text(
+                  s.namaArab,
+                  style: QBTheme.arab(
+                    size: 26,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  textDirection: TextDirection.rtl,
+                ),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => ReaderScreen(surah: s),
+                  ),
                 ),
               ),
             ),
           );
         },
-      ),
-    );
-  }
-}
-
-class _NomorSurah extends StatelessWidget {
-  final int nomor;
-  const _NomorSurah({required this.nomor});
-
-  @override
-  Widget build(BuildContext context) {
-    final primer = Theme.of(context).colorScheme.primary;
-    return Container(
-      width: 46,
-      height: 46,
-      decoration: BoxDecoration(
-        border: Border.all(color: primer, width: 1.6),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        '$nomor',
-        style: TextStyle(
-          color: primer,
-          fontWeight: FontWeight.bold,
-          fontSize: 15,
-        ),
       ),
     );
   }

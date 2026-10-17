@@ -248,9 +248,15 @@ class _QuizScreenState extends State<_QuizScreen> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        LinearProgressIndicator(
-          value: (_index + 1) / _soal!.length,
-          color: primer,
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            value: (_index + 1) / _soal!.length,
+            minHeight: 8,
+            backgroundColor: primer.withValues(alpha: 0.12),
+            valueColor:
+                const AlwaysStoppedAnimation<Color>(QBColors.emas),
+          ),
         ),
         const SizedBox(height: 8),
         Text(
@@ -410,16 +416,43 @@ class _Hasil extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.emoji_events, size: 72, color: QBColors.emas),
-            const SizedBox(height: 16),
-            Text(
-              '$benar dari $total benar',
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineMedium
-                  ?.copyWith(fontWeight: FontWeight.bold),
+            // Cincin skor: visualisasi hasil sekilas (data nyata, R-17)
+            SizedBox(
+              width: 150,
+              height: 150,
+              child: CustomPaint(
+                painter: _CincinSkor(
+                  persen: persen / 100,
+                  warna: QBColors.emas,
+                  latar: Theme.of(context)
+                      .colorScheme
+                      .primary
+                      .withValues(alpha: 0.12),
+                ),
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '$persen%',
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        '$benar dari $total benar',
+                        style:
+                            Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: QBColors.tintaLembut,
+                                ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
             Text(
               pesan,
               textAlign: TextAlign.center,
@@ -442,4 +475,47 @@ class _Hasil extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Cincin progres skor hasil kuis.
+class _CincinSkor extends CustomPainter {
+  final double persen;
+  final Color warna;
+  final Color latar;
+
+  _CincinSkor({
+    required this.persen,
+    required this.warna,
+    required this.latar,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final c = Offset(size.width / 2, size.height / 2);
+    final r = size.width / 2 - 8;
+    const tebal = 12.0;
+    canvas.drawCircle(
+      c,
+      r,
+      Paint()
+        ..color = latar
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = tebal,
+    );
+    canvas.drawArc(
+      Rect.fromCircle(center: c, radius: r),
+      -pi / 2,
+      persen * 2 * pi,
+      false,
+      Paint()
+        ..color = warna
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = tebal
+        ..strokeCap = StrokeCap.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _CincinSkor old) =>
+      old.persen != persen;
 }

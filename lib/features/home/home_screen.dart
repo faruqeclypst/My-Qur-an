@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/app_store.dart';
+import '../../core/dekorasi.dart';
 import '../../core/theme.dart';
 import '../challenge/challenge_screen.dart';
 import '../hijaiyah/hijaiyah_screen.dart';
@@ -106,41 +107,44 @@ class _BelajarTab extends StatelessWidget {
   }
 }
 
-// Beranda: sapaan, terakhir dibaca, challenge, menu cepat
+// Beranda: kepala berpola, terakhir dibaca, challenge, menu cepat
 class _BerandaTab extends StatelessWidget {
   const _BerandaTab();
 
   @override
   Widget build(BuildContext context) {
     final store = context.watch<AppStore>();
-    final nama = store.nama.isEmpty ? '' : ' ${store.nama}';
     final teks = Theme.of(context).textTheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Quranku')),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.zero,
         children: [
-          Text(
-            '${store.mode.sapaan}$nama',
-            style: teks.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+          KepalaBeranda(
+            sapaan: store.mode.sapaan,
+            nama: store.nama,
+            tanggal: _tanggalHariIni(),
           ),
-          const SizedBox(height: 4),
-          Text(
-            _tanggalHariIni(),
-            style: teks.bodyMedium?.copyWith(color: QBColors.tintaLembut),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const _LastReadCard(),
+                const SizedBox(height: 12),
+                const _ChallengeCard(),
+                const SizedBox(height: 20),
+                Text(
+                  'Menu',
+                  style: teks.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _MenuGrid(mode: store.mode),
+              ],
+            ),
           ),
-          const SizedBox(height: 16),
-          const _LastReadCard(),
-          const SizedBox(height: 12),
-          const _ChallengeCard(),
-          const SizedBox(height: 20),
-          Text(
-            'Menu',
-            style: teks.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 12),
-          _MenuGrid(mode: store.mode),
         ],
       ),
     );
@@ -183,49 +187,60 @@ class _LastReadCard extends StatelessWidget {
     final store = context.watch<AppStore>();
     final lr = store.lastRead;
     final primer = Theme.of(context).colorScheme.primary;
+    final teks = Theme.of(context).textTheme;
 
+    // Kartu hero berwarna primer: menandai aksi utama "lanjutkan ngaji"
+    // (R-01: warna kuat dipakai di satu momen penting sebagai hierarki).
     return Card(
+      color: primer,
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
-        onTap: lr == null
-            ? null
-            : () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const LastReadScreen(),
-                  ),
-                ),
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) =>
+                lr == null ? const SurahListScreen() : const LastReadScreen(),
+          ),
+        ),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(18),
           child: Row(
             children: [
               Container(
-                width: 48,
-                height: 48,
+                width: 52,
+                height: 52,
                 decoration: BoxDecoration(
-                  color: primer.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
+                  color: Colors.white.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: QBColors.emas.withValues(alpha: 0.7),
+                    width: 1.2,
+                  ),
                 ),
-                child: Icon(Icons.bookmark_outline, color: primer),
+                child: const Icon(
+                  Icons.bookmark_outline,
+                  color: Colors.white,
+                  size: 26,
+                ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 14),
               Expanded(
                 child: lr == null
                     ? Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Belum ada yang dibaca',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleSmall
-                                ?.copyWith(fontWeight: FontWeight.w600),
+                            'Mulai perjalanan ngajimu',
+                            style: teks.titleSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
                           ),
+                          const SizedBox(height: 2),
                           Text(
-                            'Mulai dari Al-Fatihah, yuk.',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
-                                ?.copyWith(color: QBColors.tintaLembut),
+                            'Buka Al-Fatihah dan baca ayat pertama.',
+                            style: teks.bodySmall?.copyWith(
+                              color: Colors.white.withValues(alpha: 0.8),
+                            ),
                           ),
                         ],
                       )
@@ -234,39 +249,36 @@ class _LastReadCard extends StatelessWidget {
                         children: [
                           Text(
                             'Terakhir dibaca',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
-                                ?.copyWith(color: QBColors.tintaLembut),
+                            style: teks.bodySmall?.copyWith(
+                              color: Colors.white.withValues(alpha: 0.8),
+                            ),
                           ),
+                          const SizedBox(height: 2),
                           Text(
                             '${lr.namaSurah} ayat ${lr.ayat}',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleSmall
-                                ?.copyWith(fontWeight: FontWeight.bold),
+                            style: teks.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
                           ),
                         ],
                       ),
               ),
-              if (lr != null)
-                FilledButton(
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const LastReadScreen(),
-                    ),
-                  ),
-                  child: const Text('Lanjutkan'),
-                )
-              else
-                FilledButton(
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const SurahListScreen(),
-                    ),
-                  ),
-                  child: const Text('Mulai'),
+              const SizedBox(width: 8),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: primer,
                 ),
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => lr == null
+                        ? const SurahListScreen()
+                        : const LastReadScreen(),
+                  ),
+                ),
+                child: Text(lr == null ? 'Mulai' : 'Lanjutkan'),
+              ),
             ],
           ),
         ),

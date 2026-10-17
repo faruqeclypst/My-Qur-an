@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/app_store.dart';
+import '../../core/theme.dart';
 
 class KisahNabi {
   final String nama;
@@ -109,12 +110,34 @@ class KisahScreen extends StatelessWidget {
                           .titleMedium
                           ?.copyWith(fontWeight: FontWeight.bold),
                     ),
-                    subtitle: Text(
-                      sudah >= nabi.episode.length - 1
-                          ? 'Selesai dibaca. MasyaAllah!'
-                          : sudah >= 0
-                              ? 'Lanjut: ${nabi.episode[mulaiDari].judul}'
-                              : '${nabi.episode.length} episode. ${nabi.gelar}',
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          sudah >= nabi.episode.length - 1
+                              ? 'Selesai dibaca. MasyaAllah!'
+                              : sudah >= 0
+                                  ? 'Lanjut: ${nabi.episode[mulaiDari].judul}'
+                                  : '${nabi.episode.length} episode. ${nabi.gelar}',
+                        ),
+                        if (sudah >= 0) ...[
+                          const SizedBox(height: 6),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: LinearProgressIndicator(
+                              value: (sudah + 1) / nabi.episode.length,
+                              minHeight: 5,
+                              backgroundColor: Theme.of(context)
+                                  .colorScheme
+                                  .primary
+                                  .withValues(alpha: 0.12),
+                              valueColor:
+                                  const AlwaysStoppedAnimation<Color>(
+                                      QBColors.emas),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                     trailing:
                         const Icon(Icons.arrow_forward_ios, size: 18),
@@ -210,16 +233,41 @@ class _KisahDetailScreenState extends State<_KisahDetailScreen> {
               ],
             ),
           ),
+          const SizedBox(height: 16),
+          // Titik episode: penanda posisi nyata dalam serial (R-31)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              for (var e = 0; e < nabi.episode.length; e++)
+                GestureDetector(
+                  onTap: () => _gantiEpisode(e),
+                  child: Container(
+                    width: e == _episode ? 22 : 8,
+                    height: 8,
+                    margin: const EdgeInsets.symmetric(horizontal: 3),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(4),
+                      color: e == _episode
+                          ? primer
+                          : primer.withValues(alpha: 0.25),
+                    ),
+                  ),
+                ),
+            ],
+          ),
           const SizedBox(height: 20),
-          for (final paragraf in ep.isi.split('\n\n'))
+          for (var p = 0; p < ep.isi.split('\n\n').length; p++)
             Padding(
               padding: const EdgeInsets.only(bottom: 14),
-              child: Text(
-                paragraf.trim(),
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      height: 1.7,
+              child: p == 0
+                  ? _paragrafAwal(
+                      context, ep.isi.split('\n\n')[p].trim(), primer)
+                  : Text(
+                      ep.isi.split('\n\n')[p].trim(),
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            height: 1.7,
+                          ),
                     ),
-              ),
             ),
           const SizedBox(height: 8),
           Row(
@@ -260,6 +308,33 @@ class _KisahDetailScreenState extends State<_KisahDetailScreen> {
             ],
           ),
           const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  /// Paragraf pembuka dengan huruf awal besar (drop cap): sentuhan khas
+  /// buku cerita agar halaman kisah terasa seperti bacaan sastra.
+  Widget _paragrafAwal(
+      BuildContext context, String teks, Color primer) {
+    final runes = teks.runes.toList();
+    if (runes.isEmpty) return const SizedBox.shrink();
+    final pertama = String.fromCharCode(runes.first);
+    final sisa = String.fromCharCodes(runes.sublist(1));
+    return RichText(
+      text: TextSpan(
+        style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.7),
+        children: [
+          TextSpan(
+            text: pertama,
+            style: TextStyle(
+              fontSize: 36,
+              height: 1.0,
+              fontWeight: FontWeight.bold,
+              color: primer,
+            ),
+          ),
+          TextSpan(text: sisa),
         ],
       ),
     );

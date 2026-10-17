@@ -52,7 +52,22 @@ class _ReminderScreenState extends State<ReminderScreen> {
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  const Icon(Icons.alarm_outlined, size: 48),
+                  Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      color: QBColors.emasMuda,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: QBColors.emas.withValues(alpha: 0.5),
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.alarm_outlined,
+                      size: 36,
+                      color: QBColors.emas,
+                    ),
+                  ),
                   const SizedBox(height: 12),
                   Text(
                     anak

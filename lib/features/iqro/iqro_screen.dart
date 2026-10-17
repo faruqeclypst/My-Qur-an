@@ -7,6 +7,7 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/app_store.dart';
+import '../../core/dekorasi.dart';
 import '../../core/theme.dart';
 
 class IqroJilid {
@@ -149,11 +150,27 @@ class _StatusProgres extends StatelessWidget {
         ],
       );
     }
-    if (progres > 0) {
-      return Text(
-          'Lanjut halaman ${progres + 1} dari ${jilid.halaman.length}');
-    }
-    return Text('${jilid.halaman.length} halaman');
+    final total = jilid.halaman.length;
+    final nilai = total == 0 ? 0.0 : progres / total;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(progres > 0
+            ? 'Lanjut halaman ${progres + 1} dari $total'
+            : '$total halaman'),
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            value: nilai,
+            minHeight: 6,
+            backgroundColor:
+                Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
+            valueColor: const AlwaysStoppedAnimation<Color>(QBColors.emas),
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -286,9 +303,14 @@ class _IqroJilidScreenState extends State<_IqroJilidScreen> {
                   child: Card(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
-                          vertical: 24, horizontal: 16),
+                          vertical: 20, horizontal: 16),
                       child: Column(
                         children: [
+                          // Ornamen kepala halaman seperti buku cetak
+                          PembatasOrnamen(
+                            warna: primer.withValues(alpha: 0.25),
+                          ),
+                          const SizedBox(height: 8),
                           for (var b = 0; b < hal.baris.length; b++) ...[
                             InkWell(
                               onTap: () => _bunyikan(hal.baris[b], b),

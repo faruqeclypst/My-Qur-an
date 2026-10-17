@@ -130,9 +130,22 @@ class _HijaiyahScreenState extends State<HijaiyahScreen> {
                 ),
           ),
           const SizedBox(height: 12),
+          // Kemajuan belajar: angka nyata dari data lokal (R-17)
+          _KartuProgres(
+            dipelajari: store.hijaiyahDipelajari.length,
+            total: hijaiyah.length * harakatList.length,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Harakat',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+          const SizedBox(height: 8),
           // Pemilih harakat
           SizedBox(
-            height: 64,
+            height: 68,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: harakatList.length,
@@ -147,7 +160,13 @@ class _HijaiyahScreenState extends State<HijaiyahScreen> {
                   ),
                   selected: aktif,
                   onSelected: (_) => setState(() => _harakatIndex = i),
-                  selectedColor: primer.withValues(alpha: 0.2),
+                  selectedColor: primer.withValues(alpha: 0.22),
+                  side: BorderSide(
+                    color: aktif
+                        ? primer
+                        : primer.withValues(alpha: 0.3),
+                  ),
+                  showCheckmark: false,
                 );
               },
             ),
@@ -179,10 +198,14 @@ class _HijaiyahScreenState extends State<HijaiyahScreen> {
               final denganHarakat = '${h.huruf}${harakat.tanda}';
               final dipelajari =
                   store.hijaiyahDipelajari.contains(denganHarakat);
+              final berbunyi =
+                  _terakhirDibunyikan == denganHarakat;
               return Card(
-                color: _terakhirDibunyikan == denganHarakat
+                color: berbunyi
                     ? primer.withValues(alpha: 0.15)
-                    : null,
+                    : dipelajari
+                        ? QBColors.emasMuda.withValues(alpha: 0.45)
+                        : null,
                 child: InkWell(
                   borderRadius: BorderRadius.circular(14),
                   onTap: () => _bunyikan(denganHarakat),
@@ -213,7 +236,7 @@ class _HijaiyahScreenState extends State<HijaiyahScreen> {
                         ),
                         if (dipelajari)
                           Icon(Icons.check_circle,
-                              size: 14, color: primer),
+                              size: 14, color: QBColors.emas),
                       ],
                     ),
                   ),
@@ -230,6 +253,63 @@ class _HijaiyahScreenState extends State<HijaiyahScreen> {
                 ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Kartu kemajuan belajar hijaiyah dengan bilah progres nyata.
+class _KartuProgres extends StatelessWidget {
+  final int dipelajari;
+  final int total;
+  const _KartuProgres({required this.dipelajari, required this.total});
+
+  @override
+  Widget build(BuildContext context) {
+    final primer = Theme.of(context).colorScheme.primary;
+    final persen = total == 0 ? 0.0 : dipelajari / total;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: QBColors.emasMuda,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.track_changes, color: QBColors.emas),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$dipelajari dari $total bunyi dipelajari',
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyMedium
+                        ?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 6),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: persen,
+                      minHeight: 7,
+                      backgroundColor: primer.withValues(alpha: 0.12),
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(QBColors.emas),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

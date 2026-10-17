@@ -27,6 +27,19 @@ Aturan keras: tidak ada gradien biru-ungu generik (R-01). Satu gradien hanya dip
 ## Motif identitas
 Garis lengkung "mihrab" sederhana di bagian atas halaman utama (satu lengkungan, bukan pola berulang). Alasan: satu gestur yang mengingatkan pada arsitektur masjid, mudah dikenali, tidak mengganggu isi.
 
+## Elemen baru (iterasi 2026-10-17)
+- **Pola bintang delapan** (`lib/core/dekorasi.dart`, CustomPainter, tanpa aset gambar): kisi geometri Islami yang digambar samar sebagai latar kepala halaman dan onboarding. Alasan: motif identitas yang khas "masjid/mushaf", dipakai hanya sebagai aksen latar (bukan dekorasi acak).
+- **KepalaBeranda**: kepala beranda berpola dengan emblem mihrab + sapaan + tanggal. Alasan: satu titik fokus hangat per layar (Part 3), menggantikan AppBar polos + teks sapaan yang terpisah.
+- **Kartu hero "Terakhir dibaca"** berwarna primer penuh dengan tombol putih. Alasan: hierarki, menandai aksi utama "lanjutkan ngaji" sebagai satu-satunya elemen berwarna kuat di beranda.
+- **MedaliNomor segi delapan** di daftar surah. Alasan: bentuk geometris khas ornamen Islam sebagai penanda identitas, tanpa menambah warna baru.
+- **PembatasOrnamen** (garis, belah ketupat emas, garis): pengganti Divider polos di kepala surah, halaman Iqro, dan mushaf. Alasan: nuansa mushaf cetak di area sakral.
+- **BingkaiMushaf** (bingkai ganda zamrud + emas tipis) untuk mode Mushaf. Alasan: memberi "ruang hormat" di sekeliling teks suci dan memisahkan hierarki bacaan dari kontrol UI.
+- **Mode Mushaf**: toggle "Per Ayat / Mushaf" (SegmentedButton) di AppBar halaman baca; teks Arab mengalir utuh dengan penanda nomor ayat Arab dalam lingkaran; tanpa latin/terjemahan; tajwid, font, dan audio full surah tetap jalan; pilihan diingat di `qb_read_mode` (ikut sync cloud via `tampilan.modeBaca`).
+- **Dial kompas kiblat** bergaya instrumen (tick tiap 15 derajat, huruf U/T/S/B, U merah mengikuti konvensi). Alasan: membantu membaca sudut kiblat dengan presisi.
+- **Cincin skor** di hasil challenge, **bilah progres** di hijaiyah/iqro/kisah (data nyata dari penyimpanan lokal). Alasan: umpan balik kemajuan yang jujur, bukan angka hiasan.
+- **Drop cap** paragraf pembuka kisah nabi. Alasan: sentuhan sastra agar halaman kisah terasa seperti buku cerita.
+- **Kartu mode onboarding** memakai warna identitas tiap mode (lansia: zamrud tua, normal: zamrud, anak: toska ceria). Alasan: pratinjau karakter tiap mode sebelum dipilih.
+
 ## Larangan copy (R-02, R-15, R-16)
 Tidak ada em dash. CTA spesifik: "Mulai Ngaji", "Lanjut ke Ayat", "Dengarkan", bukan "Get Started".
 Tidak ada klaim palsu (R-36): tidak ada angka statistik pengguna, tidak ada testimoni.

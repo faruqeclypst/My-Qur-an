@@ -152,34 +152,16 @@ class _KiblatScreenState extends State<KiblatScreen> {
       children: [
         Center(
           child: SizedBox(
-            width: 260,
-            height: 260,
+            width: 280,
+            height: 280,
             child: Stack(
               alignment: Alignment.center,
               children: [
-                Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: QBColors.kertas,
-                    border: Border.all(color: primer.withValues(alpha: 0.3), width: 3),
-                  ),
+                // Muka kompas: lingkaran + tick derajat + huruf mata angin
+                CustomPaint(
+                  size: const Size(280, 280),
+                  painter: _DialKompas(primer: primer),
                 ),
-                // Tanda mata angin
-                for (final m in ['U', 'T', 'S', 'B'])
-                  Align(
-                    alignment: _alignMataAngin(m),
-                    child: Padding(
-                      padding: const EdgeInsets.all(14),
-                      child: Text(
-                        m,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                          color: m == 'U' ? Colors.red.shade700 : primer,
-                        ),
-                      ),
-                    ),
-                  ),
                 // Jarum kiblat
                 Transform.rotate(
                   angle: ((putar ?? 0) * math.pi / 180),
@@ -187,7 +169,7 @@ class _KiblatScreenState extends State<KiblatScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(Icons.navigation,
-                          size: 72, color: QBColors.emas),
+                          size: 76, color: QBColors.emas),
                       const SizedBox(height: 4),
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -206,6 +188,16 @@ class _KiblatScreenState extends State<KiblatScreen> {
                         ),
                       ),
                     ],
+                  ),
+                ),
+                // Tutup poros jarum
+                Container(
+                  width: 16,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: primer,
+                    border: Border.all(color: QBColors.emas, width: 2),
                   ),
                 ),
               ],
@@ -252,19 +244,84 @@ class _KiblatScreenState extends State<KiblatScreen> {
       ],
     );
   }
+}
 
-  Alignment _alignMataAngin(String m) {
-    switch (m) {
-      case 'U':
-        return Alignment.topCenter;
-      case 'S':
-        return Alignment.bottomCenter;
-      case 'T':
-        return Alignment.centerRight;
-      default:
-        return Alignment.centerLeft;
+/// Muka kompas bergaya instrumen: lingkaran ganda, tick tiap 15 derajat,
+/// dan huruf mata angin. Alasan (R-31): tick derajat membantu membaca sudut
+/// kiblat dengan presisi, bukan sekadar hiasan.
+class _DialKompas extends CustomPainter {
+  final Color primer;
+  _DialKompas({required this.primer});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final c = Offset(size.width / 2, size.height / 2);
+    final r = size.width / 2;
+
+    // Muka + cincin ganda
+    canvas.drawCircle(
+      c,
+      r - 2,
+      Paint()
+        ..color = QBColors.kertas
+        ..style = PaintingStyle.fill,
+    );
+    canvas.drawCircle(
+      c,
+      r - 2,
+      Paint()
+        ..color = primer
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3,
+    );
+    canvas.drawCircle(
+      c,
+      r - 10,
+      Paint()
+        ..color = QBColors.emas.withValues(alpha: 0.7)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1,
+    );
+
+    // Tick derajat
+    const huruf = {'U': 0, 'T': 90, 'S': 180, 'B': 270};
+    for (var d = 0; d < 360; d += 15) {
+      final kardinal = d % 90 == 0;
+      final rad = (d - 90) * math.pi / 180;
+      final r1 = r - (kardinal ? 26 : 18);
+      final r2 = r - 12;
+      final p1 = c + Offset(math.cos(rad) * r1, math.sin(rad) * r1);
+      final p2 = c + Offset(math.cos(rad) * r2, math.sin(rad) * r2);
+      canvas.drawLine(
+        p1,
+        p2,
+        Paint()
+          ..color = kardinal ? primer : primer.withValues(alpha: 0.45)
+          ..strokeWidth = kardinal ? 3 : 1.5,
+      );
+    }
+
+    // Huruf mata angin (U merah mengikuti konvensi kompas)
+    for (final e in huruf.entries) {
+      final rad = (e.value - 90) * math.pi / 180;
+      final pos = c + Offset(math.cos(rad) * (r - 44), math.sin(rad) * (r - 44));
+      final tp = TextPainter(
+        text: TextSpan(
+          text: e.key,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+            color: e.key == 'U' ? const Color(0xFFB3261E) : primer,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      tp.paint(canvas, pos - Offset(tp.width / 2, tp.height / 2));
     }
   }
+
+  @override
+  bool shouldRepaint(covariant _DialKompas old) => old.primer != primer;
 }
 
 class _BarisInfo extends StatelessWidget {
