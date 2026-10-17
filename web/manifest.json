@@ -1,6 +1,6 @@
 {
-    "name": "quranku",
-    "short_name": "quranku",
+    "name": "My Qur'an",
+    "short_name": "My Qur'an",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

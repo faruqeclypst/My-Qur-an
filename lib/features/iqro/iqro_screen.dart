@@ -13,8 +13,13 @@ import '../../core/theme.dart';
 class IqroJilid {
   final int nomor;
   final String judul;
+  final String? pengantarAnak; // sapaan ramah anak per jilid (opsional)
   final List<IqroHalaman> halaman;
-  IqroJilid({required this.nomor, required this.judul, required this.halaman});
+  IqroJilid(
+      {required this.nomor,
+      required this.judul,
+      this.pengantarAnak,
+      required this.halaman});
 }
 
 class IqroHalaman {
@@ -31,6 +36,7 @@ Future<List<IqroJilid>> muatIqro() async {
       IqroJilid(
         nomor: (j['nomor'] as num).toInt(),
         judul: j['judul'] as String,
+        pengantarAnak: j['pengantar_anak'] as String?,
         halaman: [
           for (final h in (j['halaman'] as List))
             IqroHalaman(
@@ -248,6 +254,7 @@ class _IqroJilidScreenState extends State<_IqroJilidScreen> {
   Widget build(BuildContext context) {
     final jilid = widget.jilid;
     final primer = Theme.of(context).colorScheme.primary;
+    final modeAnak = context.watch<AppStore>().mode == AppMode.anak;
 
     return Scaffold(
       appBar: AppBar(
@@ -283,6 +290,44 @@ class _IqroJilidScreenState extends State<_IqroJilidScreen> {
               ],
             ),
           ),
+          // Sapaan ramah anak di awal jilid (hanya mode Anak, bila tersedia)
+          if (modeAnak && jilid.pengantarAnak != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: Card(
+                color: primer.withValues(alpha: 0.08),
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: QBColors.emas.withValues(alpha: 0.18),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.celebration_outlined,
+                          size: 22,
+                          color: QBColors.emas,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          jilid.pengantarAnak!,
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(height: 1.6),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           Expanded(
             child: PageView.builder(
               controller: _ctrl,

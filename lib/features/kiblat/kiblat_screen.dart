@@ -23,6 +23,18 @@ double hitungBearingKiblat(double lat, double lon) {
   return (bearing + 360) % 360;
 }
 
+/// Jarak great-circle ke Ka'bah dalam kilometer (haversine).
+double hitungJarakKakbahKm(double lat, double lon) {
+  const r = 6371.0;
+  final phi1 = lat * math.pi / 180;
+  final phi2 = _kakbahLat * math.pi / 180;
+  final dPhi = (_kakbahLat - lat) * math.pi / 180;
+  final dLambda = (_kakbahLon - lon) * math.pi / 180;
+  final a = math.sin(dPhi / 2) * math.sin(dPhi / 2) +
+      math.cos(phi1) * math.cos(phi2) * math.sin(dLambda / 2) * math.sin(dLambda / 2);
+  return 2 * r * math.asin(math.sqrt(a));
+}
+
 class KiblatScreen extends StatefulWidget {
   const KiblatScreen({super.key});
 
@@ -34,6 +46,7 @@ class _KiblatScreenState extends State<KiblatScreen> {
   Position? _posisi;
   String? _error;
   bool _memuat = true;
+  bool _izinPermanen = false; // izin ditolak permanen -> arahkan ke Pengaturan
   StreamSubscription<CompassEvent>? _compassSub;
   double? _arahHp; // derajat dari sensor kompas
   bool _kompasTersedia = true;
@@ -46,6 +59,17 @@ class _KiblatScreenState extends State<KiblatScreen> {
 
   Future<void> _mulai() async {
     try {
+      // Layanan lokasi (GPS) harus aktif dulu
+      final layananAktif = await Geolocator.isLocationServiceEnabled();
+      if (!layananAktif) {
+        setState(() {
+          _error = 'Layanan lokasi (GPS) belum aktif. '
+              'Aktifkan GPS di pengaturan HP, lalu coba lagi.';
+          _memuat = false;
+          _izinPermanen = false;
+        });
+        return;
+      }
       var izin = await Geolocator.checkPermission();
       if (izin == LocationPermission.denied) {
         izin = await Geolocator.requestPermission();
@@ -53,8 +77,9 @@ class _KiblatScreenState extends State<KiblatScreen> {
       if (izin == LocationPermission.denied ||
           izin == LocationPermission.deniedForever) {
         setState(() {
-          _error =
-              'Izin lokasi ditolak. Aktifkan izin lokasi agar arah kiblat bisa dihitung.';
+          _izinPermanen = izin == LocationPermission.deniedForever;
+          _error = 'Izin lokasi ditolak. '
+              'Aktifkan izin lokasi agar arah kiblat bisa dihitung.';
           _memuat = false;
         });
         return;
@@ -134,9 +159,16 @@ class _KiblatScreenState extends State<KiblatScreen> {
                     setState(() {
                       _memuat = true;
                       _error = null;
+                      _izinPermanen = false;
                     });
                     _mulai();
                   },
+                  // Izin ditolak permanen: sistem tak lagi menampilkan dialog,
+                  // user harus mengaktifkannya manual lewat Pengaturan.
+                  aksiKedua: _izinPermanen ? 'Buka Pengaturan' : null,
+                  onAksiKedua: _izinPermanen
+                      ? () => Geolocator.openAppSettings()
+                      : null,
                 )
               : _tampilanKompas(primer),
     );
@@ -211,6 +243,9 @@ class _KiblatScreenState extends State<KiblatScreen> {
             child: Column(
               children: [
                 _BarisInfo('Arah kiblat', '${bearing.toStringAsFixed(1)}\u00B0 dari utara'),
+                const Divider(),
+                _BarisInfo('Jarak ke Ka\u2019bah',
+                    '\u00B1${hitungJarakKakbahKm(_posisi!.latitude, _posisi!.longitude).toStringAsFixed(0)} km'),
                 const Divider(),
                 _BarisInfo('Lokasimu',
                     '${_posisi!.latitude.toStringAsFixed(4)}, ${_posisi!.longitude.toStringAsFixed(4)}'),
@@ -350,7 +385,14 @@ class _BarisInfo extends StatelessWidget {
 class _PesanError extends StatelessWidget {
   final String pesan;
   final VoidCallback onRetry;
-  const _PesanError({required this.pesan, required this.onRetry});
+  final String? aksiKedua;
+  final VoidCallback? onAksiKedua;
+  const _PesanError({
+    required this.pesan,
+    required this.onRetry,
+    this.aksiKedua,
+    this.onAksiKedua,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -365,6 +407,10 @@ class _PesanError extends StatelessWidget {
             Text(pesan, textAlign: TextAlign.center),
             const SizedBox(height: 16),
             FilledButton(onPressed: onRetry, child: const Text('Coba lagi')),
+            if (aksiKedua != null && onAksiKedua != null) ...[
+              const SizedBox(height: 8),
+              OutlinedButton(onPressed: onAksiKedua, child: Text(aksiKedua!)),
+            ],
           ],
         ),
       ),

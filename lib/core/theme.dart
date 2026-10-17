@@ -104,10 +104,11 @@ class QBTheme {
     );
   }
 
-  /// Gaya teks Arab: Amiri Quran dari aset lokal (dibundel di aplikasi,
-  /// bukan diunduh saat runtime) agar tabel GPOS/GSUB untuk posisi harakat
-  /// dan tanda waqaf selalu tersedia — termasuk saat offline atau CDN font
-  /// tidak terjangkau browser. Selalu kanan-ke-kiri.
+  /// Gaya teks Arab: Scheherazade New (OFL, SIL) dari aset lokal — harakat,
+  /// tanwin, dan tanda waqaf proporsional dan ramping ala mushaf cetak
+  /// Madinah. Dibundel di aplikasi (bukan diunduh saat runtime) agar tabel
+  /// GPOS/GSUB untuk posisi diakritik selalu tersedia — termasuk saat
+  /// offline atau CDN font tidak terjangkau browser. Selalu kanan-ke-kiri.
   ///
   /// Dipakai di: mode Per Ayat, mode Mushaf, hijaiyah, iqro.
   static TextStyle arab({
@@ -117,8 +118,8 @@ class QBTheme {
     double height = 2.0,
   }) {
     return TextStyle(
-      fontFamily: 'AmiriQuran',
-      fontFamilyFallback: const ['Amiri', 'serif'],
+      fontFamily: 'ScheherazadeNew',
+      fontFamilyFallback: const ['AmiriQuran', 'Amiri', 'serif'],
       fontSize: size,
       color: color,
       fontWeight: weight,

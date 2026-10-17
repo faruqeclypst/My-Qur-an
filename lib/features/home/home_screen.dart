@@ -131,8 +131,11 @@ class _BerandaTab extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const _LastReadCard(),
-                const SizedBox(height: 12),
-                const _ChallengeCard(),
+                // Challenge Harian disembunyikan penuh di mode Lansia.
+                if (store.mode != AppMode.lansia) ...[
+                  const SizedBox(height: 12),
+                  const _ChallengeCard(),
+                ],
                 const SizedBox(height: 20),
                 Text(
                   'Menu',

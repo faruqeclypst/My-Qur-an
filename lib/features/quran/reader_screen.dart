@@ -15,7 +15,9 @@ import 'tajwid.dart';
 class ReaderScreen extends StatefulWidget {
   final Surah surah;
   final int ayatAwal; // untuk "lanjutkan" dari terakhir dibaca
-  const ReaderScreen({super.key, required this.surah, this.ayatAwal = 1});
+  final bool autoplay; // putar seluruh surah otomatis (dipakai saat lanjut dari surah sebelumnya)
+  const ReaderScreen(
+      {super.key, required this.surah, this.ayatAwal = 1, this.autoplay = false});
 
   @override
   State<ReaderScreen> createState() => _ReaderScreenState();
@@ -42,10 +44,14 @@ class _ReaderScreenState extends State<ReaderScreen> {
       if (!mounted) return;
       setState(() => _memutar = st.playing);
       if (st.processingState == ProcessingState.completed) {
+        final modePenuh = _putarSemua;
         setState(() {
           _putarSemua = false;
           _ayatDiputar = null;
         });
+        // Selesai memutar seluruh surah -> otomatis lanjut ke surah
+        // berikutnya (kecuali An-Nas, surah terakhir: berhenti normal).
+        if (modePenuh) _lanjutSurahBerikutnya();
       }
     });
     // Ikuti perpindahan ayat saat memutar seluruh surah
@@ -79,6 +85,12 @@ class _ReaderScreenState extends State<ReaderScreen> {
       // Lompat ke ayat awal bila diminta
       if (widget.ayatAwal > 1) {
         WidgetsBinding.instance.addPostFrameCallback((_) => _keAyat(widget.ayatAwal));
+      }
+      // Autoplay: dipakai saat otomatis lanjut dari surah sebelumnya.
+      if (widget.autoplay) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _putarSeluruhSurah();
+        });
       }
     } catch (e) {
       if (mounted) {
@@ -163,6 +175,46 @@ class _ReaderScreenState extends State<ReaderScreen> {
     }
   }
 
+  /// Putar audio ayat sebelumnya (dalam surah yang sama).
+  Future<void> _ayatSebelumnya() async {
+    if (_detail == null) return;
+    final saatIni = _ayatDiputar ?? 1;
+    if (saatIni > 1) await _putarAyat(saatIni - 1);
+  }
+
+  /// Putar audio ayat berikutnya (dalam surah yang sama).
+  Future<void> _ayatBerikutnya() async {
+    if (_detail == null) return;
+    final saatIni = _ayatDiputar ?? 0;
+    if (saatIni < _detail!.ayat.length) await _putarAyat(saatIni + 1);
+  }
+
+  /// Otomatis lanjut ke surah berikutnya saat putar-seluruh-surah selesai.
+  /// Tampilan reader ikut berpindah dan langsung memutar dari ayat 1.
+  /// Di surah terakhir (An-Nas, 114) berhenti normal.
+  Future<void> _lanjutSurahBerikutnya() async {
+    if (widget.surah.nomor >= 114) return;
+    try {
+      final daftar = await QuranApi.daftarSurah();
+      final berikutnya =
+          daftar.firstWhere((s) => s.nomor == widget.surah.nomor + 1);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Lanjut ke ${berikutnya.namaLatin}...'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => ReaderScreen(surah: berikutnya, autoplay: true),
+        ),
+      );
+    } catch (_) {
+      // Gagal memuat daftar surah: berhenti normal, tidak mengganggu user.
+    }
+  }
+
   void _simpanTerakhir(int ayat) {
     context.read<AppStore>().saveLastRead(
           widget.surah.nomor,
@@ -213,6 +265,21 @@ class _ReaderScreenState extends State<ReaderScreen> {
             tooltip: 'Ukuran huruf',
             icon: const Icon(Icons.text_fields),
             onPressed: () => _dialogFont(),
+          ),
+          // Toggle tanda warna tajwid: berlaku di mode Per Ayat MAUPUN
+          // Mushaf; pilihan tersimpan di preferensi lokal (qb_show_tajwid).
+          IconButton(
+            tooltip: store.showTajwid
+                ? 'Tanda warna tajwid: aktif'
+                : 'Tanda warna tajwid: nonaktif',
+            icon: Icon(
+              Icons.format_color_text,
+              color: store.showTajwid
+                  ? Colors.white
+                  : Colors.white.withValues(alpha: 0.45),
+            ),
+            onPressed: () =>
+                store.setToggles(tajwid: !store.showTajwid),
           ),
         ],
         // Toggle Per Ayat / Mushaf: di AppBar agar mudah dijangkau ibu jari.
@@ -287,6 +354,23 @@ class _ReaderScreenState extends State<ReaderScreen> {
                         onPressed: _berhenti,
                         tooltip: 'Berhenti',
                       ),
+                    // Navigasi audio per ayat: berlaku di mode Per Ayat
+                    // maupun Mushaf. Menekan salah satunya beralih dari
+                    // mode putar-seluruh-surah ke putar ayat satuan.
+                    IconButton(
+                      icon: const Icon(Icons.skip_previous),
+                      tooltip: 'Ayat sebelumnya',
+                      onPressed: (_ayatDiputar ?? 1) > 1
+                          ? _ayatSebelumnya
+                          : null,
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.skip_next),
+                      tooltip: 'Ayat berikutnya',
+                      onPressed: (_ayatDiputar ?? 0) < _detail!.ayat.length
+                          ? _ayatBerikutnya
+                          : null,
+                    ),
                   ],
                 ),
               ),
@@ -435,74 +519,72 @@ class _ReaderScreenState extends State<ReaderScreen> {
         return Card(
           key: _kunciAyat[ayat.nomor],
           color: sedangDiputar ? primer.withValues(alpha: 0.08) : null,
-          margin: const EdgeInsets.only(bottom: 10),
+          margin: const EdgeInsets.only(bottom: 12),
           child: Padding(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Nomor ayat + tombol audio
+                // Nomor ayat (medali segi delapan, konsisten dengan daftar
+                // surah) + tombol audio yang jelas.
                 Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: primer.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        '${ayat.nomor}',
-                        style: TextStyle(
-                          color: primer,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                    MedaliNomor(nomor: ayat.nomor, ukuran: 40),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Ayat ${ayat.nomor}',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                     const Spacer(),
-                    IconButton(
-                      tooltip: sedangDiputar
-                          ? 'Berhenti'
-                          : 'Dengarkan ayat ${ayat.nomor}',
-                      icon: Icon(
-                        sedangDiputar
-                            ? Icons.stop_circle_outlined
-                            : Icons.play_circle_outline,
-                        color: primer,
-                      ),
+                    FilledButton.tonalIcon(
                       onPressed: sedangDiputar
                           ? _berhenti
                           : () => _putarAyat(ayat.nomor),
+                      icon: Icon(
+                        sedangDiputar ? Icons.stop : Icons.play_arrow,
+                        size: 18,
+                      ),
+                      label: Text(sedangDiputar ? 'Berhenti' : 'Dengar'),
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
+                        textStyle: const TextStyle(fontSize: 13),
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
-                // Teks Arab (dengan/s tanpa tajwid)
+                const SizedBox(height: 12),
+                // Teks Arab yang lega (dengan/tanpa tanda warna tajwid)
                 RichText(
                   textAlign: TextAlign.right,
                   textDirection: TextDirection.rtl,
                   text: bangunTeksTajwid(
                     ayat.teksArab,
-                    gayaDasar: gayaArab,
+                    gayaDasar: gayaArab.copyWith(height: 2.3),
                     aktif: store.showTajwid,
                   ),
                 ),
                 if (store.showLatin) ...[
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
                   Text(
                     ayat.teksLatin,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontStyle: FontStyle.italic,
                           color: QBColors.tintaLembut,
+                          height: 1.6,
                         ),
                   ),
                 ],
                 if (store.showTerjemahan) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
+                  Divider(color: primer.withValues(alpha: 0.15), height: 1),
+                  const SizedBox(height: 12),
                   Text(
                     ayat.teksIndonesia,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          height: 1.6,
+                          height: 1.7,
                         ),
                   ),
                 ],

@@ -20,7 +20,7 @@ ENERGY 2 / RHYTHM 2 / MOTION 1
 Aturan keras: tidak ada gradien biru-ungu generik (R-01). Satu gradien hanya dipakai sebagai aksen latar header halaman utama dengan alasan hierarki.
 
 ## Tipografi
-- Arab: **Amiri Quran** (dibundel lokal di `assets/fonts/`, bukan Google Fonts runtime). Alasan: rasm Utsmani yang rapi, dirancang khusus untuk teks Quran, terbaca di ukuran besar maupun kecil. Dibundel lokal agar tabel GPOS/GSUB untuk posisi harakat & tanda waqaf selalu tersedia — termasuk saat offline atau CDN font tidak terjangkau browser (revisi 2026-10-17). Gaya Arab pusat (`QBTheme.arab`) mengaktifkan fitur OpenType `liga` + `kern`.
+- Arab: **Scheherazade New** (OFL, SIL International; dibundel lokal di `assets/fonts/`, bukan Google Fonts runtime). Alasan: harakat, tanwin, dan tanda waqaf proporsional dan ramping ala mushaf cetak Madinah — Amiri Quran sebelumnya diganti karena harakatnya terlalu besar dan tidak proporsional (revisi 2026-10-17). Fallback: Amiri Quran (juga dibundel). Dibundel lokal agar tabel GPOS/GSUB untuk posisi diakritik selalu tersedia — termasuk saat offline atau CDN font tidak terjangkau browser. Gaya Arab pusat (`QBTheme.arab`) mengaktifkan fitur OpenType `liga` + `kern`.
 - Pewarnaan tajwid (`bangunTeksTajwid`): segmentasi per grapheme cluster (huruf + harakat/tandanya tidak pernah terpisah ke span berbeda) dan span berwarna hanya mengubah warna — bukan fontSize/fontFamily/fontWeight — agar tidak memicu font fallback sistem yang merusak posisi harakat (revisi 2026-10-17).
 - Latin/UI: **system font stack** Flutter default. Alasan: tidak menambah unduhan font, konsisten dengan platform, dan cukup untuk teks Indonesia.
 - Mode Lansia menaikkan skala teks 1,35x secara global.

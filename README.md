@@ -1,114 +1,88 @@
-# Quranku
+# My Qur'an
 
-Teman ngaji harian: aplikasi Al-Quran untuk **Lansia**, **Normal**, dan **Anak**.
-Tanpa login wajib, tanpa backend. Semua data tersimpan di perangkat
-(`shared_preferences`, otomatis menjadi `localStorage` di web).
+Aplikasi Al-Quran untuk semua usia: **Lansia**, **Normal**, dan **Anak**.
+Tanpa login wajib, tanpa backend — semua data tersimpan di perangkat
+(`shared_preferences`; otomatis menjadi `localStorage` di versi web).
 
-Package: `id.examku.quranku`
+- Package: `id.examku.quranku`
+- Versi web: https://perseverance.my.id/quran/
 
 ## Fitur
 
-- **Onboarding**: pilih mode (Lansia / Normal / Anak) + nama opsional.
-- **Al-Quran**: 114 surah + pencarian. Teks Arab (Amiri Quran), latin,
-  terjemahan Indonesia (data: equran.ninja v2, di-cache lokal).
-  Audio per ayat + putar full surah. Penanda warna tajwid berbasis aturan
-  (ikhfa, idgham, iqlab, qalqalah, mad). Slider ukuran font.
-  Posisi terakhir dibaca tersimpan otomatis.
-- **Belajar Hijaiyah**: 28 huruf + 7 harakat, ketuk untuk dengar (TTS ar-SA).
-- **Belajar Iqro**: Jilid 1-3, halaman per halaman, ketuk baris untuk dengar.
-- **Kisah 25 Nabi**: tiap nabi 3-5 episode, progres tersimpan.
-- **Kompas Kiblat**: bearing great-circle ke Ka'bah dari GPS + sensor kompas;
-  fallback manual bila sensor tidak ada (web).
-- **Pengingat Ngaji**: notifikasi lokal harian (Android); fallback dalam
-  aplikasi di web.
-- **Challenge Harian**: 10 soal per sesi (bank soal lokal), skor + streak
-  harian + badge.
-- **Pengaturan**: ganti mode, ukuran font, toggle tajwid/latin/terjemahan,
-  info sinkronisasi cloud (segera hadir, via Firebase + login Google).
+- **Onboarding** — pilih mode (Lansia / Normal / Anak) + nama opsional. Mode bisa diganti kapan saja di Pengaturan.
+- **Baca Al-Quran** — 114 surah + pencarian.
+  - Dua tampilan: **Per Ayat** (kartu per ayat: Arab + latin + terjemahan) dan **Mushaf** (teks Arab satu surah mengalir utuh seperti mushaf cetak, tanpa latin/terjemahan).
+  - **Tanda warna tajwid** berbasis aturan (ikhfa, idgham, iqlab, qalqalah, mad), bisa dinyalakan/dimatikan dari halaman baca.
+  - **Audio**: per ayat, putar seluruh surah, tombol ayat sebelumnya/berikutnya, dan otomatis lanjut ke surah berikutnya saat putar full surah selesai.
+  - Slider ukuran huruf Arab; posisi terakhir dibaca tersimpan otomatis.
+- **Belajar Hijaiyah** — 28 huruf + variasi harakat, ketuk untuk mendengar (TTS).
+- **Belajar Iqro** — Jilid 1–3, halaman per halaman, ketuk baris untuk mendengar; sapaan ramah anak di mode Anak.
+- **Kisah 25 Nabi** — serial per episode, bahasa ramah anak, progres baca tersimpan.
+- **Kompas Kiblat** — arah kiblat dari GPS (bearing great-circle ke Ka'bah) + sensor kompas HP; tampilkan jarak ke Ka'bah; panduan manual bila sensor tidak tersedia (web/laptop).
+- **Pengingat Ngaji** — notifikasi lokal harian (Android); pengingat dalam aplikasi di web.
+- **Challenge Harian** — kuis harian untuk mode Normal dan Anak (bank soal lokal), skor + streak + badge. Disembunyikan penuh di mode Lansia.
+- **Terakhir Dibaca** — akses cepat melanjutkan bacaan terakhir.
 
-## Sinkronisasi Cloud (rencana, belum aktif)
+## Tech Stack
 
-Keputusan: **Firebase Authentication (Google Sign-In) + Realtime Database**.
-Tanpa Firestore. Login tetap opsional; tanpa login aplikasi lokal penuh.
+- **Flutter** (Android, iOS, Web, tablet)
+- **Data Quran**: API equran.id v2 (teks Arab, latin, terjemahan Kemenag, audio per ayat) — di-cache lokal
+- **Penyimpanan lokal**: `shared_preferences`
+- **Font Arab**: Scheherazade New (OFL, SIL) dibundel lokal + fallback Amiri Quran
+- **Audio**: `just_audio` · **TTS**: `flutter_tts` · **Lokasi**: `geolocator` · **Kompas**: `flutter_compass` · **Notifikasi**: `flutter_local_notifications`
 
-Struktur JSON tree di Realtime Database (`users/{uid}`):
-
-```
-users/{uid}/
-  meta:           { updatedAt, appVersion, schema }
-  profile:        { mode, nama, fontScale }
-  tampilan:       { tajwid, latin, terjemahan }
-  terakhirDibaca: { surah, namaSurah, ayat, waktu }
-  reminder:       { on, hour, minute }
-  challenge:      { streak, lastDate, score, badges: [...] }
-  iqro:           { "1": halaman, "2": halaman, "3": halaman }
-  kisah:          { "0": episodeIdx, ... }
-  hijaiyah:       [ "بَ", "تَ", ... ]
-```
-
-Lapisan data sudah siap: `lib/core/sync_model.dart` (`export()` /
-`rtdbPath(uid)` / `remoteLebihBaru()` untuk last-write-wins) dan
-`AppStore.restoreFromSync()` (pulihkan defensif dari tree, tanpa crash
-bila tree tidak lengkap). Test: `test/sync_model_test.dart` (`flutter test`).
-
-Langkah setup (~30 menit setelah proyek Firebase siap):
-1. Firebase Console → buat proyek (gratis) → daftarkan aplikasi Android
-   (`id.examku.quranku`) + Web.
-2. Authentication → aktifkan provider **Google**.
-3. Realtime Database → buat database → atur rules per-user:
-   ```json
-   { "rules": { "users": { "$uid": {
-     ".read": "auth != null && auth.uid == $uid",
-     ".write": "auth != null && auth.uid == $uid"
-   } } } }
-   ```
-4. Tambah paket `firebase_auth`, `google_sign_in`, `firebase_database`;
-   pasang `google-services.json` (Android) sesuai dokumentasi Firebase.
-5. Alur: setelah login Google → baca `users/{uid}` → bandingkan
-   `meta.updatedAt` dengan lokal (`SyncModel.remoteLebihBaru`) → yang baru
-   menang → tulis balik bila lokal lebih baru. Tombol "Sinkronkan sekarang"
-   + sinkronisasi otomatis tiap perubahan penting.
-
-## Menjalankan
+## Cara Menjalankan
 
 ```bash
-export PATH="$HOME/workspace/tools/flutter/bin:$PATH"
 flutter pub get
-flutter run                    # debug (pilih perangkat)
-flutter build web --release    # output: build/web
+flutter run
 ```
 
-## Deploy web ke VPS
-
-Lihat `deploy.sh`. Ringkasnya:
+## Cara Build
 
 ```bash
-./deploy.sh
+# Web (release)
+flutter build web --release
+
+# Android APK (release) — butuh Android SDK
+flutter build apk --release
 ```
 
-Script membangun web release, mengunggah ke `/var/www/quranku` di VPS
-`43.134.175.87` lewat `~/workspace/tools/vps-ssh`, lalu menambah blok
-`quran.examku.my.id` ke Caddy dan me-reload. Butuh tunnel SSH aktif dan
-DNS `quran.examku.my.id` mengarah ke `43.134.175.87` (atur di Cloudflare).
+Deploy versi web ke server memakai `./deploy.sh` (idempoten; mengunggah hasil
+build ke VPS dan me-reload Caddy).
 
-## Struktur
+## Struktur Folder (ringkas)
 
 ```
 lib/
-  main.dart
-  core/            # storage, app_store (state), theme
+  main.dart                # entry point
+  core/                    # theme, AppStore (state), dekorasi, sync_model
   features/
-    onboarding/
-    home/
-    quran/         # api client, tajwid highlighter, daftar, reader, terakhir dibaca
-    hijaiyah/
-    iqro/
-    kisah/
-    kiblat/
-    reminder/
-    challenge/
-    settings/
-assets/data/       # iqro.json, kisah_nabi.json, challenge.json
+    home/                  # beranda + navigasi per mode
+    quran/                 # daftar surah, halaman baca, API, tajwid
+    hijaiyah/              # belajar huruf hijaiyah
+    iqro/                  # belajar iqro jilid 1-3
+    kisah/                 # kisah 25 nabi
+    kiblat/                # kompas kiblat
+    challenge/             # challenge harian
+    reminder/              # pengingat ngaji
+    settings/              # pengaturan
+assets/
+  data/                    # iqro.json, kisah_nabi.json, challenge.json
+  fonts/                   # font Arab lokal (OFL)
+  icon/                    # ikon aplikasi
 ```
 
-Lihat `DESIGN.md` untuk arah desain.
+## Sinkronisasi Cloud (rencana, belum aktif)
+
+Login tetap opsional. Bila ingin progres (terakhir dibaca, skor, progres
+belajar) tersimpan online dan sinkron antar-perangkat, rencananya memakai
+**Firebase Authentication (Google Sign-In) + Firebase Realtime Database**.
+Model data di `lib/core/sync_model.dart` sudah dirancang siap-Realtime-Database
+(struktur JSON tree + strategi last-write-wins via `meta.updatedAt`).
+
+## Lisensi & Kredit
+
+- Font **Scheherazade New** dan **Amiri Quran**: SIL Open Font License (OFL).
+- Data teks, terjemahan, dan audio Al-Quran: **equran.id** (API v2).
+- Kode aplikasi: milik pengembang.

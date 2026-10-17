@@ -24,15 +24,31 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
   uses-material-design: true
   assets:
     - assets/data/
   fonts:
-    # Amiri Quran (OFL, The Amiri Project) dibundel lokal agar tabel
-    # GPOS/GSUB untuk posisi harakat selalu tersedia — termasuk saat
-    # offline atau CDN Google Fonts tidak terjangkau browser.
+    # Scheherazade New (OFL, SIL International) — font utama teks Arab:
+    # harakat/tanwin/tanda waqaf proporsional dan ramping ala mushaf cetak
+    # Madinah. Dibundel lokal agar tabel GPOS/GSUB selalu tersedia.
+    - family: ScheherazadeNew
+      fonts:
+        - asset: assets/fonts/ScheherazadeNew-Regular.ttf
+    # Amiri Quran (OFL, The Amiri Project) — fallback bila ada glif yang
+    # tidak tercakup font utama.
     - family: AmiriQuran
       fonts:
         - asset: assets/fonts/AmiriQuran-Regular.ttf
+
+# Ikon aplikasi: digenerate dari assets/icon/app_icon.png via
+# `dart run flutter_launcher_icons` (jangan edit hasil generate manual).
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/app_icon.png"
+  web:
+    generate: true
+    image_path: "assets/icon/app_icon.png"
