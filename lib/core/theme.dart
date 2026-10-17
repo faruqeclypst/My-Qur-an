@@ -104,9 +104,12 @@ class QBTheme {
     );
   }
 
-  /// Gaya teks Arab: Scheherazade New (OFL, SIL) dari aset lokal — harakat,
-  /// tanwin, dan tanda waqaf proporsional dan ramping ala mushaf cetak
-  /// Madinah. Dibundel di aplikasi (bukan diunduh saat runtime) agar tabel
+  /// Gaya teks Arab: Scheherazade New (OFL, SIL) dari aset lokal — font yang
+  /// dirancang khusus untuk typesetting Al-Quran: harakat, tanwin, dan tanda
+  /// waqaf proporsional dan ramping ala mushaf cetak Madinah (quran.com
+  /// memakai KFGQPC Uthmanic yang lisensinya melarang redistribusi —
+  /// terbukti dari EULA tertanam di TTF-nya — sehingga tidak bisa dibundel).
+  /// Dibundel di aplikasi (bukan diunduh saat runtime) agar tabel
   /// GPOS/GSUB untuk posisi diakritik selalu tersedia — termasuk saat
   /// offline atau CDN font tidak terjangkau browser. Selalu kanan-ke-kiri.
   ///
@@ -114,7 +117,7 @@ class QBTheme {
   static TextStyle arab({
     double size = 28,
     Color color = QBColors.tinta,
-    FontWeight weight = FontWeight.w500,
+    FontWeight weight = FontWeight.normal,
     double height = 2.0,
   }) {
     return TextStyle(
