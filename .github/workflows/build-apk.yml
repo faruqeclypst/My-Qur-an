@@ -1,0 +1,39 @@
+# Build APK Android otomatis setiap ada push ke main.
+# Hasil: file APK (app-release.apk) bisa diunduh dari tab Actions > artifact "my-quran-apk".
+# Catatan: APK ini ditandatangani dengan debug key bawaan Flutter — cukup untuk
+# dipasang langsung di HP (sideload) untuk testing. Untuk rilis Play Store,
+# tambahkan keystore signing terpisah.
+name: Build APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          # Disamakan dengan SDK yang dipakai membangun versi web (Okt 2026)
+          flutter-version: "3.47.7"
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build APK release
+        run: flutter build apk --release
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: my-quran-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 30
