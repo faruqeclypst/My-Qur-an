@@ -1,6 +1,8 @@
 // Penanda warna tajwid berbasis aturan (tanpa data eksternal).
 // Aturan yang dicakup: ikhfa, idgham bighunnah, idgham bilaghunnah, iqlab,
-// idzhar, qalqalah, dan mad thabi'i. Implementasi: pemindaian rune per rune.
+// idzhar, qalqalah, dan mad thabi'i. Implementasi: pemindaian rune per rune,
+// lalu batas span dijepit ke batas grapheme cluster agar huruf +
+// harakat/tandanya tidak pernah terpisah ke span berbeda.
 import 'package:flutter/material.dart';
 
 // Karakter Arab yang relevan
@@ -47,6 +49,18 @@ bool _isTanwin(String ch) =>
 bool _isHuruf(String ch) {
   final c = ch.codeUnitAt(0);
   return c >= 0x0627 && c <= 0x064A; // rentang huruf hijaiyah dasar
+}
+
+/// Tanda diakritik Arab (harakat, tanwin, sukun, syaddah, tanda waqaf kecil)
+/// yang secara tipografi menempel pada huruf induknya. Batas pewarnaan
+/// tajwid tidak boleh memotong di tengah kelompok ini.
+bool _isTandaDiakritik(int rune) {
+  return (rune >= 0x064B && rune <= 0x0655) || // ً-ٟ (harakat/tanwin/syaddah/sukun)
+      rune == 0x0670 || // superscript alef
+      (rune >= 0x06D6 && rune <= 0x06DC) || // tanda waqaf kecil
+      (rune >= 0x06DF && rune <= 0x06E4) ||
+      (rune >= 0x06E7 && rune <= 0x06E8) ||
+      (rune >= 0x06EA && rune <= 0x06ED);
 }
 
 /// Pindai [teks] dan kembalikan daftar rentang tajwid (indeks dalam rune).
@@ -134,6 +148,12 @@ List<TajwidSpan> tandaiTajwid(String teks) {
 }
 
 /// Bangun TextSpan Arab dengan warna tajwid. [warnaDasar] untuk teks biasa.
+///
+/// Jaminan tipografi: teks disegmentasi per grapheme cluster (huruf +
+/// harakat/tandanya selalu satu paket), dan span berwarna HANYA mengubah
+/// warna — tidak mengubah fontSize, fontFamily, maupun fontWeight. Amiri
+/// Quran hanya punya satu weight; weight berbeda memicu font fallback
+/// sistem yang merusak posisi harakat.
 TextSpan bangunTeksTajwid(
   String teks, {
   required TextStyle gayaDasar,
@@ -143,42 +163,75 @@ TextSpan bangunTeksTajwid(
     return TextSpan(text: teks, style: gayaDasar);
   }
   final runes = teks.runes.toList();
+  if (runes.isEmpty) {
+    return TextSpan(text: teks, style: gayaDasar);
+  }
   final spans = tandaiTajwid(teks);
   if (spans.isEmpty) {
     return TextSpan(text: teks, style: gayaDasar);
   }
 
+  // Jepit batas setiap span ke batas grapheme cluster: bila batas jatuh
+  // di tengah huruf + tanda diakritiknya, geser hingga satu cluster utuh
+  // masuk ke span yang sama.
+  final dijepit = spans.map((s) {
+    var start = s.start;
+    var end = s.end;
+    while (start > 0 && _isTandaDiakritik(runes[start])) {
+      start--;
+    }
+    while (end < runes.length && _isTandaDiakritik(runes[end])) {
+      end++;
+    }
+    return TajwidSpan(start, end, s.warna, s.label);
+  }).toList();
+
   // Tandai rune mana yang berwarna
   final warnaPerRune = List<Color?>.filled(runes.length, null);
-  for (final s in spans) {
+  for (final s in dijepit) {
     for (var i = s.start; i < s.end && i < runes.length; i++) {
       warnaPerRune[i] ??= s.warna;
     }
   }
 
+  // Bangun span per grapheme cluster: tidak ada cluster yang terbelah,
+  // dan cluster yang berdekatan dengan warna sama digabung.
   final children = <TextSpan>[];
-  var i = 0;
-  while (i < runes.length) {
-    final w = warnaPerRune[i];
-    var j = i + 1;
-    while (j < runes.length && warnaPerRune[j] == w) {
-      j++;
-    }
-    final potongan =
-        String.fromCharCodes(runes.sublist(i, j));
+  String? berjalan;
+  Color? warnaBerjalan;
+
+  void siram() {
+    if (berjalan == null) return;
     children.add(
       TextSpan(
-        text: potongan,
-        style: w == null
+        text: berjalan,
+        style: warnaBerjalan == null
             ? gayaDasar
-            : gayaDasar.copyWith(
-                color: w,
-                fontWeight: FontWeight.w700,
-              ),
+            : gayaDasar.copyWith(color: warnaBerjalan),
       ),
     );
-    i = j;
+    berjalan = null;
   }
+
+  var idxRune = 0;
+  for (final cluster in teks.characters) {
+    final jumlahRune = cluster.runes.length;
+    // Setelah dijepit, seluruh rune dalam satu cluster selalu seragam.
+    Color? w;
+    for (var k = idxRune; k < idxRune + jumlahRune; k++) {
+      w ??= warnaPerRune[k];
+    }
+    if (w != warnaBerjalan) {
+      siram();
+      warnaBerjalan = w;
+      berjalan = cluster;
+    } else {
+      berjalan = (berjalan ?? '') + cluster;
+    }
+    idxRune += jumlahRune;
+  }
+  siram();
+
   return TextSpan(children: children, style: gayaDasar);
 }
 

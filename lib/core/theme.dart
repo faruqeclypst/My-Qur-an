@@ -1,7 +1,6 @@
 // Identitas visual Quranku: hangat seperti mushaf cetak, tenang, punya karakter.
 // Zamrud tua + krem kertas + aksen emas. Lihat DESIGN.md untuk alasan tiap pilihan.
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'app_store.dart';
 
@@ -105,18 +104,28 @@ class QBTheme {
     );
   }
 
-  /// Gaya teks Arab: Amiri Quran, selalu kanan-ke-kiri.
+  /// Gaya teks Arab: Amiri Quran dari aset lokal (dibundel di aplikasi,
+  /// bukan diunduh saat runtime) agar tabel GPOS/GSUB untuk posisi harakat
+  /// dan tanda waqaf selalu tersedia — termasuk saat offline atau CDN font
+  /// tidak terjangkau browser. Selalu kanan-ke-kiri.
+  ///
+  /// Dipakai di: mode Per Ayat, mode Mushaf, hijaiyah, iqro.
   static TextStyle arab({
     double size = 28,
     Color color = QBColors.tinta,
     FontWeight weight = FontWeight.w500,
     double height = 2.0,
   }) {
-    return GoogleFonts.amiriQuran(
+    return TextStyle(
+      fontFamily: 'AmiriQuran',
+      fontFamilyFallback: const ['Amiri', 'serif'],
       fontSize: size,
       color: color,
       fontWeight: weight,
       height: height,
+      // Aktifkan ligatur & kerning OpenType: harakat, tanwin, dan tanda
+      // waqaf dirender menempel pas pada huruf induknya.
+      fontFeatures: const [FontFeature('liga'), FontFeature('kern')],
     );
   }
 }

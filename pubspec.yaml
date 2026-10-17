@@ -9,12 +9,12 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  characters: ^1.4.1
   provider: ^6.1.2
   shared_preferences: ^2.5.3
   http: ^1.4.0
   just_audio: ^0.10.5
   flutter_tts: ^4.2.3
-  google_fonts: ^6.3.2
   geolocator: ^14.0.2
   flutter_compass: ^0.8.1
   flutter_local_notifications: ^19.4.2
@@ -29,3 +29,10 @@ flutter:
   uses-material-design: true
   assets:
     - assets/data/
+  fonts:
+    # Amiri Quran (OFL, The Amiri Project) dibundel lokal agar tabel
+    # GPOS/GSUB untuk posisi harakat selalu tersedia — termasuk saat
+    # offline atau CDN Google Fonts tidak terjangkau browser.
+    - family: AmiriQuran
+      fonts:
+        - asset: assets/fonts/AmiriQuran-Regular.ttf
